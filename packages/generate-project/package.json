@@ -1,0 +1,23 @@
+{
+  "name": "@chancetop/generate-project",
+  "version": "1.0.0",
+  "description": "Generate a project",
+  "private": true,
+  "bin": {
+    "create": "./src/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^13.1.0"
+  },
+  "devDependencies": {
+    "@chancetop/eslint-config": "workspace:^",
+    "@chancetop/typescript-config": "workspace:*",
+    "typescript": "^5.7.3"
+  }
+}

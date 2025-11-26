@@ -1,0 +1,38 @@
+{
+  "name": "@chancetop/ai-react",
+  "version": "1.0.1",
+  "description": "",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "tsup src/index.ts --format esm --dts --watch",
+    "build": "pnpm run clean && tsup src/index.ts --format esm --dts",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "peerDependencies": {
+    "@chancetop/ai-api": "workspace:*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "@types/use-sync-external-store": "^1.5.0",
+    "fast-deep-equal": "^3.1.3",
+    "use-sync-external-store": "^1.6.0",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@chancetop/ai-api": "workspace:*",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5"
+  }
+}

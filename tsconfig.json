@@ -1,0 +1,4 @@
+{
+  "extends": "@chancetop/typescript-config/base.json"
+}
+

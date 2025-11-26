@@ -1,0 +1,32 @@
+{
+  "name": "core-fe-sse-demo",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite --host",
+    "test": ""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@chancetop/ai-api": "workspace:*",
+    "@chancetop/ai-react": "workspace:*",
+    "@rudderstack/analytics-js": "^3.25.1",
+    "core-fe": "^1.41.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.9.3",
+    "ua-parser-js": "^2.0.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.1.1",
+    "tsx": "^4.20.6",
+    "vite": "^7.2.2"
+  }
+}

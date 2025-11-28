@@ -5,6 +5,10 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chancetop-com/ai-fe"
+  },
   "scripts": {
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
     "build": "pnpm run clean && tsup src/index.ts --format cjs,esm --dts",
@@ -22,5 +26,8 @@
   "dependencies": {
     "eventsource": "^4.1.0",
     "uuid": "^13.0.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

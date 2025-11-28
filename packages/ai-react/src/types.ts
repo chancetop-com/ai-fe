@@ -1,4 +1,4 @@
-import { AiLib, AiLibState } from '@chancetop/ai-api';
+import { AiLib, AiLibState } from '@connexup/ai-api';
 
 export type AiLibStateSnapshot = AiLibState;
 

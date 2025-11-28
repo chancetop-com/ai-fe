@@ -1,3 +1,3 @@
-import config from '@chancetop/eslint-config/prettier';
+import config from '@connexup/eslint-config/prettier';
 
 export default config;

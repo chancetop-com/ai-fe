@@ -11,7 +11,7 @@ function updatePackageJson(destinationPath, projectName, isLibrary) {
   const packageJsonPath = path.join(destinationPath, "package.json");
   if (fs.existsSync(packageJsonPath)) {
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
-    packageJson.name = !isLibrary ? `@project/${projectName}` : `@chancetop/${projectName}`;
+    packageJson.name = !isLibrary ? `@project/${projectName}` : `@connexup/${projectName}`;
     fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
   }
 }

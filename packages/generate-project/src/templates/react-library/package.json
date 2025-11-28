@@ -19,7 +19,7 @@
     "react-dom": "^19.0.0"
   },
   "dependencies": {
-    "@chancetop/ui": "workspace:*",
+    "@connexup/ui": "workspace:*",
     "lucide-react": "^0.475.0"
   },
   "devDependencies": {

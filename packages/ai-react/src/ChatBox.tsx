@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AiLib } from '@chancetop/ai-api';
+import { AiLib } from '@connexup/ai-api';
 import { useAiLibState } from './useAiLibState';
 import { v4 as uuid } from 'uuid';
 

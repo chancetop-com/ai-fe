@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@chancetop/ui'],
+  transpilePackages: ['@connexup/ui'],
 };
 
 export default nextConfig;

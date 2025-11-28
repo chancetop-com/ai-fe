@@ -22,7 +22,7 @@
 
 // test.connect()
 
-import { AiLib } from '@chancetop/ai-api';
+import { AiLib } from '@connexup/ai-api';
 
 const test = new AiLib({
   // actionPrefix: "",

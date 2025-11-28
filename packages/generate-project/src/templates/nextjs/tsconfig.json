@@ -1,10 +1,10 @@
 {
-  "extends": "@chancetop/typescript-config/nextjs.json",
+  "extends": "@connexup/typescript-config/nextjs.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@chancetop/ui/*": ["../../packages/ui/src/*"]
+      "@connexup/ui/*": ["../../packages/ui/src/*"]
     },
     "plugins": [
       {

@@ -1,7 +1,7 @@
 import deepEqual from 'fast-deep-equal/es6/react.js';
 import { useDebugValue, useEffect, useLayoutEffect, useState } from 'react';
 import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector';
-import { AiLib } from '@chancetop/ai-api';
+import { AiLib } from '@connexup/ai-api';
 import { AiLibStateSnapshot, UseAiLibStateOptions } from './types';
 
 const useIsomorphicLayoutEffect =

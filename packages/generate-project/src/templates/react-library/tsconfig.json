@@ -1,5 +1,5 @@
 {
-  "extends": "@chancetop/typescript-config/react-library.json",
+  "extends": "@connexup/typescript-config/react-library.json",
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "bundler",

@@ -13,8 +13,8 @@
   "license": "ISC",
   "private": true,
   "dependencies": {
-    "@chancetop/ai-api": "workspace:*",
-    "@chancetop/ai-react": "workspace:*",
+    "@connexup/ai-api": "workspace:*",
+    "@connexup/ai-react": "workspace:*",
     "@rudderstack/analytics-js": "^3.25.1",
     "core-fe": "^1.41.0",
     "react": "^19.0.0",

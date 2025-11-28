@@ -1,4 +1,4 @@
-import { ChatBox } from '@chancetop/ai-react';
+import { ChatBox } from '@connexup/ai-react';
 
 function App() {
   return <ChatBox />;

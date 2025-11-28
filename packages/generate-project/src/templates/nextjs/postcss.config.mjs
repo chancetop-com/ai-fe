@@ -1,1 +1,1 @@
-export { default } from '@chancetop/ui/postcss.config';
+export { default } from '@connexup/ui/postcss.config';

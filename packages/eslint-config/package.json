@@ -1,5 +1,5 @@
 {
-  "name": "@chancetop/eslint-config",
+  "name": "@connexup/eslint-config",
   "version": "1.0.0",
   "type": "module",
   "private": true,

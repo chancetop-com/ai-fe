@@ -1,5 +1,5 @@
 {
-  "extends": "@chancetop/typescript-config/base.json",
+  "extends": "@connexup/typescript-config/base.json",
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "bundler",

@@ -14,7 +14,7 @@
     "components": "@/components",
     "hooks": "@/hooks",
     "lib": "@/lib",
-    "utils": "@chancetop/ui/lib/utils",
-    "ui": "@chancetop/ui/components"
+    "utils": "@connexup/ui/lib/utils",
+    "ui": "@connexup/ui/components"
   }
 }

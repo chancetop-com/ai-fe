@@ -2,7 +2,7 @@
 
 ### usage
 ```javascript
-import { AiLib } from '@chancetop/ai-api';
+import { AiLib } from '@connexup/ai-api';
 const aiLib = new AiLib({
   actionPrefix: "",
   url: "https://sse-test.connexup-uat.net/agent/chat/stream",

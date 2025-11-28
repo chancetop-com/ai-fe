@@ -8,15 +8,15 @@ importers:
 
   .:
     devDependencies:
-      '@chancetop/eslint-config':
-        specifier: workspace:*
-        version: link:packages/eslint-config
-      '@chancetop/typescript-config':
-        specifier: workspace:*
-        version: link:packages/typescript-config
       '@changesets/cli':
         specifier: ^2.29.1
         version: 2.29.7(@types/node@24.10.1)
+      '@connexup/eslint-config':
+        specifier: workspace:*
+        version: link:packages/eslint-config
+      '@connexup/typescript-config':
+        specifier: workspace:*
+        version: link:packages/typescript-config
       prettier:
         specifier: ^3.5.1
         version: 3.6.2
@@ -29,10 +29,10 @@ importers:
 
   examples/sse-demo:
     dependencies:
-      '@chancetop/ai-api':
+      '@connexup/ai-api':
         specifier: workspace:*
         version: link:../../packages/ai-api
-      '@chancetop/ai-react':
+      '@connexup/ai-react':
         specifier: workspace:*
         version: link:../../packages/ai-react
       '@rudderstack/analytics-js':
@@ -107,7 +107,7 @@ importers:
         specifier: ^13.0.0
         version: 13.0.0
     devDependencies:
-      '@chancetop/ai-api':
+      '@connexup/ai-api':
         specifier: workspace:*
         version: link:../ai-api
       '@types/node':
@@ -198,10 +198,10 @@ importers:
         specifier: ^13.1.0
         version: 13.1.0
     devDependencies:
-      '@chancetop/eslint-config':
+      '@connexup/eslint-config':
         specifier: workspace:^
         version: link:../eslint-config
-      '@chancetop/typescript-config':
+      '@connexup/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
       typescript:

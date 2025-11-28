@@ -1,7 +1,7 @@
 {
-  "name": "@chancetop/ai-fe",
+  "name": "@connexup/ai-fe",
   "version": "1.0.0",
-  "private": false,
+  "private": true,
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
@@ -13,8 +13,8 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.1",
-    "@chancetop/eslint-config": "workspace:*",
-    "@chancetop/typescript-config": "workspace:*",
+    "@connexup/eslint-config": "workspace:*",
+    "@connexup/typescript-config": "workspace:*",
     "prettier": "^3.5.1",
     "turbo": "^2.4.2",
     "typescript": "^5.9.3"

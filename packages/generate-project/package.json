@@ -1,5 +1,5 @@
 {
-  "name": "@chancetop/generate-project",
+  "name": "@connexup/generate-project",
   "version": "1.0.0",
   "description": "Generate a project",
   "private": true,
@@ -16,8 +16,8 @@
     "commander": "^13.1.0"
   },
   "devDependencies": {
-    "@chancetop/eslint-config": "workspace:^",
-    "@chancetop/typescript-config": "workspace:*",
+    "@connexup/eslint-config": "workspace:^",
+    "@connexup/typescript-config": "workspace:*",
     "typescript": "^5.7.3"
   }
 }

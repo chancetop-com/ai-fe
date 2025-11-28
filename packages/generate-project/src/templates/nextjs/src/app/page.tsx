@@ -1,4 +1,4 @@
-import { Button } from '@chancetop/ui/components/button';
+import { Button } from '@connexup/ui/components/button';
 export default function Page() {
   return (
     <div className="flex items-center justify-center min-h-svh">

@@ -5,10 +5,6 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/chancetop-com/ai-fe"
-  },
   "scripts": {
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
     "build": "pnpm run clean && tsup src/index.ts --format cjs,esm --dts",
@@ -18,6 +14,11 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chancetop-com/ai-fe"
+  },
+  "private": false,
   "devDependencies": {
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",

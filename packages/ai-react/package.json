@@ -5,6 +5,7 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "private": false,
   "scripts": {
     "dev": "tsup src/index.ts --format esm --dts --watch",
     "build": "pnpm run clean && tsup src/index.ts --format esm --dts",

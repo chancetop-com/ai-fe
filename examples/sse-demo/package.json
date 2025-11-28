@@ -11,6 +11,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "private": true,
   "dependencies": {
     "@chancetop/ai-api": "workspace:*",
     "@chancetop/ai-react": "workspace:*",

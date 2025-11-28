@@ -1,7 +1,7 @@
 {
-  "name": "ai-fe",
-  "version": "0.0.1",
-  "private": true,
+  "name": "@chancetop/ai-fe",
+  "version": "1.0.0",
+  "private": false,
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",

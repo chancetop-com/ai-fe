@@ -9,6 +9,7 @@ export function ChatBox({}: Props) {
   const [aiLib] = useState(() => {
     const instance = new AiLib({
       baseUrl: 'https://sse-test.connexup-uat.net/agent/chat/stream',
+      // baseUrl: 'http://localhost:3030/sse/unstable-stream',
 
       onMessage: (data: any) => {
         console.log('receive data: ', data);
@@ -82,12 +83,11 @@ export function ChatBox({}: Props) {
           res.splice(res.length - 1, 1, {
             ...lastItem,
             msg: '哦哦，我出错了，请稍后再试！',
-            error: error,
+            error: error ? error.errorCode + ', ' + error.errorMessage : null,
           });
         }
         return res;
       });
-      setStreamContent('');
     }
   }, [status, message, error]);
 

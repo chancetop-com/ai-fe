@@ -1,0 +1,14 @@
+config
+node_modules
+public
+scripts
+src
+.eslintignore
+.gitignore
+.npmignore
+.prettierignore
+package-lock.json
+package.json
+tsconfig.build.json
+tsconfig.json
+.git

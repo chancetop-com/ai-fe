@@ -25,20 +25,23 @@ export interface SSEListeners {
   // onUpdate?: (event: Event) => void;
   onOpen: () => void;
   onMessage: (data: any) => void;
-  onError: (event: EventSourceEventMap['error']) => void;
+  onError: (event: Event) => void;
   onDisconnect: () => void;
 }
 
 export type AiLibOptions = BaseRequestOption &
   Partial<SSEListeners> & {
-    actionPrefix: string;
-    logResponse?: boolean;
+    loggerAppName?: string;
+    loggerUrl?: string;
   };
 
 export interface AiLibState {
   status: EventSourceStatus;
   message: null | Record<string, any>;
-  error: null | string;
+  error: null | {
+    errorCode: null | string | number;
+    errorMessage: null | string;
+  };
   allMessages: Record<string, any>[];
 }
 

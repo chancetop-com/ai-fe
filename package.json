@@ -1,7 +1,7 @@
 {
   "name": "@connexup/ai-fe",
   "version": "1.0.0",
-  "private": true,
+  "private": false,
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",

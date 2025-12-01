@@ -1,4 +1,4 @@
-### ai lib react 版本
+### ai react library
 
 ### usage
 ```javascript

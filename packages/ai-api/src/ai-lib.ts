@@ -49,7 +49,7 @@ export class AiLib<
       loggerAppName,
       loggerUrl,
       baseUrl,
-      customHeaders,
+      headers,
       onOpen,
       onMessage,
       onError,
@@ -58,7 +58,7 @@ export class AiLib<
 
     this.#baseRequestOptions = {
       baseUrl,
-      customHeaders,
+      headers,
     };
 
     this.#onOpen = onOpen;
@@ -231,7 +231,7 @@ export class AiLib<
         payload: mergeOptions.payload
           ? JSON.stringify(mergeOptions.payload)
           : undefined,
-        headers: JSON.stringify(mergeOptions.customHeaders),
+        headers: JSON.stringify(mergeOptions.headers),
         streaming: (mergeOptions.streaming ?? true).toString(),
       },
       stats: {
@@ -247,7 +247,7 @@ export class AiLib<
   }
 
   #useEventSource(requestOptions: RequestOptions<T>) {
-    const { url, method = 'GET', customHeaders = {}, payload } = requestOptions;
+    const { url, method = 'GET', headers = {}, payload } = requestOptions;
     this.#eventSource = new EventSource(url, {
       fetch: (input, init) =>
         fetch(input, {
@@ -256,7 +256,7 @@ export class AiLib<
           body: payload ? JSON.stringify(payload) : null,
           headers: {
             'content-type': 'application/json',
-            ...customHeaders,
+            ...headers,
             ...init?.headers,
             'x-trace-id': this.#traceId!,
           },
@@ -289,7 +289,7 @@ export class AiLib<
         payload: requestOptions.payload
           ? JSON.stringify(requestOptions.payload)
           : undefined,
-        headers: JSON.stringify(requestOptions.customHeaders),
+        headers: JSON.stringify(requestOptions.headers),
         streaming: (requestOptions.streaming ?? true).toString(),
       },
       stats: {
@@ -300,13 +300,13 @@ export class AiLib<
 
     this.#onOpen?.();
 
-    const { url, method, customHeaders = {}, payload } = requestOptions;
+    const { url, method, headers = {}, payload } = requestOptions;
     fetch(url, {
       method,
       body: payload ? JSON.stringify(payload) : null,
       headers: {
         'content-type': 'application/json',
-        ...customHeaders,
+        ...headers,
         'x-trace-id': this.#traceId!,
       },
       signal: this.#ajaxController.signal,

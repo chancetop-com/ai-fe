@@ -1,7 +1,7 @@
 {
   "name": "@connexup/ai-fe",
   "version": "1.0.0",
-  "private": false,
+  "private": true,
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
@@ -22,8 +22,5 @@
   "packageManager": "pnpm@10.4.1",
   "engines": {
     "node": ">=20"
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }

@@ -26,13 +26,13 @@ export function mergeRequestOptions<T extends any>(
   baseRequestOptions: BaseRequestOption,
   requestOptions: RequestOptions<T>
 ) {
-  const { baseUrl, customHeaders: baseCustomHeaders } = baseRequestOptions;
-  const { url, customHeaders, ...restOptions } = requestOptions;
+  const { baseUrl, headers: baseCustomHeaders } = baseRequestOptions;
+  const { url, headers: incomingHeaders, ...restOptions } = requestOptions;
   return {
     url: normalizeUrl(baseUrl, url),
-    customHeaders: {
+    headers: {
       ...(baseCustomHeaders || {}),
-      ...(customHeaders || {}),
+      ...(incomingHeaders || {}),
     },
     ...restOptions,
   } as RequestOptions<T>;

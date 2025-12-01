@@ -2,12 +2,12 @@ import { EventSource } from 'eventsource';
 
 export interface BaseRequestOption {
   baseUrl: string;
-  customHeaders?: Record<string, string>;
+  headers?: Record<string, string>;
 }
 
 export interface RequestOptions<T> {
   url: string;
-  customHeaders?: Record<string, string>;
+  headers?: Record<string, string>;
   method?: 'GET' | 'POST' | 'PUT';
   payload?: T;
   streaming?: boolean;

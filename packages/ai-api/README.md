@@ -4,12 +4,9 @@
 ```javascript
 import { AiLib } from '@connexup/ai-api';
 const aiLib = new AiLib({
-  actionPrefix: "",
-  url: "https://sse-test.connexup-uat.net/agent/chat/stream",
-  method: "POST",
-  payload: {
-    "message":"I work in the sector of Fast Casual","merchant_id":"54b78da8-4d71-4576-8f59-915e7bd94561","merchant_name":"Chancetop Edit","user_id":"0bfb3b5d-3d71-4753-860f-149a9312cdbe","conversation_id":"874cac77-2d43-4691-8ae6-25a1358d5172"
-    },
+  loggerUrl: "",
+  loggerAppName: "",
+  baseUrl: "https://sse-test.connexup-uat.net/agent/chat/stream",
   onMessage: (data) => {
     console.log('receive data: ', data);
   },
@@ -18,12 +15,16 @@ const aiLib = new AiLib({
   },
 });
 
-aiLib.on('update', (state) => console.log('aiLib state', state));
-
-aiLib.connect();
+aiLib.connect({
+  url: "", // mandatory
+  method: "POST", // optional default “GET”
+  headers: {}, // optional
+  payload: { // optional, use for request body
+    "message":"I work in the sector of Fast Casual","merchant_id":"54b78da8-4d71-4576-8f59-915e7bd94561","merchant_name":"Chancetop Edit","user_id":"0bfb3b5d-3d71-4753-860f-149a9312cdbe","conversation_id":"874cac77-2d43-4691-8ae6-25a1358d5172"
+    }
+});
 
 setTimeout(() => {
-    aiLib.off('update');
     aiLib.disconnect();
 }, 20000);
 ```

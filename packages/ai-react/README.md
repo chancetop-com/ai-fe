@@ -13,14 +13,11 @@ export function ChatBox({}: Props) {
 
       onMessage: (data: any) => {
         console.log('receive data: ', data);
-        if (data.type === 'end') {
-          instance.disconnect();
-        }
       },
       onError: (e: any) => {
         console.log('receive error: ', e.message);
       },
-    } as any);
+    });
 
     return instance;
   });

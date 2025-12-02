@@ -8,8 +8,7 @@ type Props = {};
 export function ChatBox({}: Props) {
   const [aiLib] = useState(() => {
     const instance = new AiLib({
-      baseUrl: 'https://sse-test.connexup-uat.net/agent/chat/stream',
-      // baseUrl: 'http://localhost:3030/sse/unstable-stream',
+      baseUrl: 'http://localhost:3030',
 
       onMessage: (data: any) => {
         console.log('receive data: ', data);
@@ -111,13 +110,9 @@ export function ChatBox({}: Props) {
     });
     setStreamContent('');
     aiLib.connect({
-      url: '',
-      method: 'POST',
+      url: '/sse/stream?errorType=connection_error',
+      method: 'GET',
       payload: {
-        message: value,
-        merchant_id: '54b78da8-4d71-4576-8f59-915e7bd94561',
-        merchant_name: 'Chancetop Edit',
-        user_id: '0bfb3b5d-3d71-4753-860f-149a9312cdbe',
         conversation_id: conversationId,
       },
     });

@@ -12,7 +12,7 @@ export function ChatBox({}: Props) {
     const instance = new AiLib({
       loggerUrl: "",
       loggerAppName: "",
-      baseUrl: 'https://sse-test.connexup-uat.net',
+      baseUrl: 'http://localhost:3030',
       onMessage: (data: any) => {
         console.log('receive data: ', data);
       },
@@ -41,13 +41,9 @@ useEffect(() => {
     aiLib.disconnect();
     
     aiLib.connect({
-      url: '/agent/chat/stream',
-      method: 'POST',
+      url: '/sse/stream?errorType=connection_error',
+      method: 'GET',
       payload: {
-        message: value,
-        merchant_id: '54b78da8-4d71-4576-8f59-915e7bd94561',
-        merchant_name: 'Chancetop Edit',
-        user_id: '0bfb3b5d-3d71-4753-860f-149a9312cdbe',
         conversation_id: conversationId,
       },
     });

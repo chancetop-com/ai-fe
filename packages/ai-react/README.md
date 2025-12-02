@@ -1,4 +1,5 @@
 ### ai react library
+AiLib simple React state management and AI chatbox component
 
 ### usage
 ```javascript
@@ -9,8 +10,9 @@ import { v4 as uuid } from 'uuid';
 export function ChatBox({}: Props) {
     const [aiLib] = useState(() => {
     const instance = new AiLib({
-      baseUrl: 'https://sse-test.connexup-uat.net/agent/chat/stream',
-
+      loggerUrl: "",
+      loggerAppName: "",
+      baseUrl: 'https://sse-test.connexup-uat.net',
       onMessage: (data: any) => {
         console.log('receive data: ', data);
       },
@@ -39,7 +41,7 @@ useEffect(() => {
     aiLib.disconnect();
     
     aiLib.connect({
-      url: '',
+      url: '/agent/chat/stream',
       method: 'POST',
       payload: {
         message: value,

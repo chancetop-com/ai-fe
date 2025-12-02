@@ -1,4 +1,5 @@
 ### frontend ai api library
+Including start request, request interrupt, error handling, logs, status management
 
 ### usage
 ```javascript
@@ -6,7 +7,7 @@ import { AiLib } from '@connexup/ai-api';
 const aiLib = new AiLib({
   loggerUrl: "",
   loggerAppName: "",
-  baseUrl: "https://sse-test.connexup-uat.net/agent/chat/stream",
+  baseUrl: "https://sse-test.connexup-uat.net",
   onMessage: (data) => {
     console.log('receive data: ', data);
   },
@@ -16,7 +17,7 @@ const aiLib = new AiLib({
 });
 
 aiLib.connect({
-  url: "", // mandatory
+  url: "/agent/chat/stream", // mandatory
   method: "POST", // optional default “GET”
   headers: {}, // optional
   payload: { // optional, use for request body

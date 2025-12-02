@@ -1,7 +1,7 @@
 # @connexup/ai-api
 
-## 1.0.1
+## 1.0.2
 
 ### Patch Changes
 
-- update params: customHeaders => headers
+- update README.md

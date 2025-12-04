@@ -1,5 +1,11 @@
 # @connexup/ai-react
 
+## 1.0.4
+
+### Patch Changes
+
+- update component chatbox
+
 ## 1.0.3
 
 ### Patch Changes

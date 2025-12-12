@@ -1,6 +1,6 @@
 {
   "name": "@connexup/ai-react",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "",
   "type": "module",
   "main": "dist/index.js",
@@ -15,10 +15,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/chancetop-com/ai-fe"
-  },
   "peerDependencies": {
     "@connexup/ai-api": "workspace:*",
     "react": "^19.0.0",

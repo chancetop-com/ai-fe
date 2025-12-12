@@ -11,9 +11,9 @@ export class AiLibStoreManager<TAiLib extends AiLib | null = AiLib | null> {
   private aiLib: TAiLib;
   private lastSnapshot: AiLibStateSnapshot = {
     status: 'idle',
-    message: null,
+    streamMessage: null,
+    fullMessages: [],
     error: null,
-    allMessages: [],
   };
 
   private subscribers = new Set<() => void>();

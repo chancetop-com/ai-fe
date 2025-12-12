@@ -1,6 +1,6 @@
 {
   "name": "@connexup/ai-api",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "",
   "type": "module",
   "main": "dist/index.js",
@@ -14,10 +14,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/chancetop-com/ai-fe"
-  },
   "private": false,
   "devDependencies": {
     "tsx": "^4.20.6",

@@ -23,9 +23,10 @@ export class AiLib<
   #traceId: string | null = null;
   #aiLibState: AiLibState = {
     status: 'idle',
-    message: null,
+    streamMessage: null,
+    fullMessages: [],
     error: null,
-    allMessages: [],
+    // allMessages: [],
   };
   #ajaxController: AbortController | undefined;
   #getRequestOptions(incomingOptions: RequestOptions<T>): RequestOptions<T> {
@@ -45,20 +46,11 @@ export class AiLib<
 
   constructor(options: AiLibOptions) {
     super();
-    const {
-      loggerAppName,
-      loggerUrl,
-      baseUrl,
-      headers,
-      onOpen,
-      onMessage,
-      onError,
-      onDisconnect,
-    } = options;
+    const { loggerUrl, baseUrl, onOpen, onMessage, onError, onDisconnect } =
+      options;
 
     this.#baseRequestOptions = {
       baseUrl,
-      headers,
     };
 
     this.#onOpen = onOpen;
@@ -66,7 +58,7 @@ export class AiLib<
     this.#onError = onError;
     this.#onDisconnect = onDisconnect;
 
-    this.#logger = new Logger(loggerAppName || 'AI-api', loggerUrl || '');
+    this.#logger = new Logger(loggerUrl || '');
   }
 
   #updateState(state: Partial<AiLibState>) {
@@ -103,7 +95,7 @@ export class AiLib<
 
     this.#updateState({
       status: 'open',
-      message: null,
+      streamMessage: null,
       error: null,
     });
 
@@ -135,11 +127,12 @@ export class AiLib<
       message.type === 'menu_table' ||
       message.type === 'menu_preview'
     ) {
+      const streamMessage =
+        message.content || message.table_config || message.preview_config;
       this.#updateState({
         status: 'open',
-        message:
-          message.content || message.table_config || message.preview_config,
-        allMessages: [...this.#aiLibState.allMessages, message.content],
+        fullMessages: [...this.#aiLibState.fullMessages, streamMessage],
+        streamMessage,
         error: null,
       });
 
@@ -196,7 +189,7 @@ export class AiLib<
 
     this.#updateState({
       status: 'error',
-      message: null,
+      streamMessage: null,
       error: {
         errorCode: exception!.errorCode,
         errorMessage: exception.message,
@@ -228,9 +221,7 @@ export class AiLib<
         traceId: this.#traceId!,
         url: mergeOptions.url,
         method: mergeOptions.method,
-        payload: mergeOptions.payload
-          ? JSON.stringify(mergeOptions.payload)
-          : undefined,
+        data: mergeOptions.data ? JSON.stringify(mergeOptions.data) : undefined,
         headers: JSON.stringify(mergeOptions.headers),
         streaming: (mergeOptions.streaming ?? true).toString(),
       },
@@ -247,13 +238,13 @@ export class AiLib<
   }
 
   #useEventSource(requestOptions: RequestOptions<T>) {
-    const { url, method = 'GET', headers = {}, payload } = requestOptions;
-    this.#eventSource = new EventSource(url, {
+    const { url, method = 'GET', headers = {}, data } = requestOptions;
+    this.#eventSource = new EventSource(url!, {
       fetch: (input, init) =>
         fetch(input, {
           ...init,
           method,
-          body: payload ? JSON.stringify(payload) : null,
+          body: data ? JSON.stringify(data) : null,
           headers: {
             'content-type': 'application/json',
             ...headers,
@@ -264,7 +255,8 @@ export class AiLib<
     });
     this.#updateState({
       status: 'connecting',
-      message: null,
+      streamMessage: null,
+      fullMessages: [],
       error: null,
     });
 
@@ -276,7 +268,8 @@ export class AiLib<
     this.#connectingTimes = 1;
     this.#updateState({
       status: 'open',
-      message: null,
+      streamMessage: null,
+      fullMessages: [],
       error: null,
     });
 
@@ -286,8 +279,8 @@ export class AiLib<
         traceId: this.#traceId!,
         url: requestOptions.url,
         method: requestOptions.method,
-        payload: requestOptions.payload
-          ? JSON.stringify(requestOptions.payload)
+        data: requestOptions.data
+          ? JSON.stringify(requestOptions.data)
           : undefined,
         headers: JSON.stringify(requestOptions.headers),
         streaming: (requestOptions.streaming ?? true).toString(),
@@ -300,10 +293,10 @@ export class AiLib<
 
     this.#onOpen?.();
 
-    const { url, method, headers = {}, payload } = requestOptions;
-    fetch(url, {
+    const { url, method, headers = {}, data } = requestOptions;
+    fetch(url!, {
       method,
-      body: payload ? JSON.stringify(payload) : null,
+      body: data ? JSON.stringify(data) : null,
       headers: {
         'content-type': 'application/json',
         ...headers,
@@ -336,8 +329,8 @@ export class AiLib<
       })
       .then(async (data) => {
         this.#updateState({
-          message: data,
-          allMessages: [...this.#aiLibState.allMessages, data],
+          streamMessage: data,
+          fullMessages: [data],
           error: null,
         });
         this.#onMessage?.(data);
@@ -356,7 +349,8 @@ export class AiLib<
         });
 
         this.#updateState({
-          message: null,
+          streamMessage: null,
+          fullMessages: [],
           status: 'error',
           error: {
             errorCode: e.errorCode || e.statusCode,
@@ -433,9 +427,10 @@ export class AiLib<
     this.#eventSource = null;
     this.#updateState({
       status: 'idle',
-      message: null,
+      streamMessage: null,
+      fullMessages: [],
       error: null,
-      allMessages: [],
+      // allMessages: [],
     });
     this.removeAllListeners();
   }

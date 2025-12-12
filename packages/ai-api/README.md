@@ -6,7 +6,6 @@ Including start request, request interrupt, error handling, logs, status managem
 import { AiLib } from '@connexup/ai-api';
 const aiLib = new AiLib({
   loggerUrl: "",
-  loggerAppName: "",
   baseUrl: "http://localhost:3030",
   onMessage: (data) => {
     console.log('receive data: ', data);
@@ -20,7 +19,8 @@ aiLib.connect({
   url: "/sse/stream?errorType=connection_error", // mandatory
   // method: "POST", // optional default “GET”
   // headers: {}, // optional
-  // payload: { // optional, use for request body
+  // pathParams: {},
+  // data: { // optional, use for request body
   //   }
 });
 

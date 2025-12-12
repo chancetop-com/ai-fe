@@ -30,10 +30,8 @@ interface ErrorLogEntry extends InfoLogEntry {
 }
 
 export class Logger {
-  appName: string;
   url: string;
-  constructor(appName: string, url: string) {
-    this.appName = appName;
+  constructor(url: string) {
     this.url = url;
   }
 
@@ -143,15 +141,11 @@ export class Logger {
   }
 
   async send(log: Log | undefined) {
-    if (!log) return;
+    if (!log || !this.url) return;
     if (this.url) {
-      await fetch(`${this.url}/${this.appName}`, {
+      await fetch(`${this.url}`, {
+        credentials: 'include',
         method: 'POST',
-        headers: {
-          'with-credentials': 'true',
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
         body: JSON.stringify({
           events: [log],
         }),

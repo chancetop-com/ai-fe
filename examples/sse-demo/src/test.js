@@ -2,7 +2,6 @@ import { AiLib } from '@connexup/ai-api';
 
 const test = new AiLib({
   // loggerUrl: "",
-  // loggerAppName: "",
   baseUrl: 'http://localhost:3030',
   onMessage: (data) => {
     console.log('receive data: ', data);

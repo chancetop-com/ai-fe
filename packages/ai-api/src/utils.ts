@@ -26,20 +26,32 @@ export function mergeRequestOptions<T extends any>(
   baseRequestOptions: BaseRequestOption,
   requestOptions: RequestOptions<T>
 ) {
-  const { baseUrl, headers: baseCustomHeaders } = baseRequestOptions;
-  const { url, headers: incomingHeaders, ...restOptions } = requestOptions;
+  const { baseUrl } = baseRequestOptions;
+  const { url, pathParams, ...restOptions } = requestOptions;
   return {
-    url: normalizeUrl(baseUrl, url),
-    headers: {
-      ...(baseCustomHeaders || {}),
-      ...(incomingHeaders || {}),
-    },
+    url: normalizeUrl(baseUrl, url, pathParams),
     ...restOptions,
   } as RequestOptions<T>;
 }
 
-function normalizeUrl(baseUrl: string, url: string) {
+function normalizeUrl(
+  baseUrl: string = '',
+  url: string = '',
+  pathParams: Record<string, string> = {}
+) {
   return url.startsWith('http') || url.startsWith('https')
-    ? url
-    : (baseUrl || '') + (url || '');
+    ? urlParams(url, pathParams)
+    : baseUrl + urlParams(url, pathParams);
+}
+
+export function urlParams(pattern: string, params: object): string {
+  if (!params) {
+    return pattern;
+  }
+  let url = pattern;
+  Object.entries(params).forEach(([name, value]) => {
+    const encodedValue = encodeURIComponent(value.toString());
+    url = url.replace(':' + name, encodedValue);
+  });
+  return url;
 }

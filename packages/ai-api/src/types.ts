@@ -1,15 +1,15 @@
 import { EventSource } from 'eventsource';
 
 export interface BaseRequestOption {
-  baseUrl: string;
-  headers?: Record<string, string>;
+  baseUrl?: string;
 }
 
 export interface RequestOptions<T> {
-  url: string;
+  url?: string;
   headers?: Record<string, string>;
   method?: 'GET' | 'POST' | 'PUT';
-  payload?: T;
+  pathParams?: Record<string, string>;
+  data?: T;
   streaming?: boolean;
 }
 
@@ -31,18 +31,18 @@ export interface SSEListeners {
 
 export type AiLibOptions = BaseRequestOption &
   Partial<SSEListeners> & {
-    loggerAppName?: string;
     loggerUrl?: string;
   };
 
 export interface AiLibState {
   status: EventSourceStatus;
-  message: null | Record<string, any>;
+  streamMessage: null | Record<string, any>;
+  fullMessages: Record<string, any>[];
   error: null | {
     errorCode: null | string | number;
     errorMessage: null | string;
   };
-  allMessages: Record<string, any>[];
+  // allMessages: Record<string, any>[];
 }
 
 export interface EditorEvents {

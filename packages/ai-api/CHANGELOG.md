@@ -1,5 +1,11 @@
 # @connexup/ai-api
 
+## 1.0.4
+
+### Patch Changes
+
+- optimize: options params
+
 ## 1.0.3
 
 ### Patch Changes

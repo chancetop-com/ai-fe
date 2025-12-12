@@ -1,55 +1,216 @@
 ### ai react library
-AiLib simple React state management and AI chatbox component
+- useAiLib => AiLib management
+- useAiLibState => AiLib state management
+- ChatBox => AI chatbox component
 
 ### usage
 ```javascript
-import { AiLib } from '@connexup/ai-api';
+import React, { useEffect, useState } from 'react';
+import { AiLibOptions, RequestOptions } from '@connexup/ai-api';
 import { useAiLibState } from './useAiLibState';
+import { useAiLib } from './useAiLib';
 import { v4 as uuid } from 'uuid';
 
-export function ChatBox({}: Props) {
-    const [aiLib] = useState(() => {
-    const instance = new AiLib({
-      loggerUrl: "",
-      loggerAppName: "",
-      baseUrl: 'http://localhost:3030',
-      onMessage: (data: any) => {
-        console.log('receive data: ', data);
-      },
-      onError: (e: any) => {
-        console.log('receive error: ', e.message);
-      },
-    });
+type Props<T> = {
+  options: AiLibOptions & RequestOptions<T>;
+  connectOptions: RequestOptions<T>;
+  renderMessage?: (message: any) => React.ReactNode;
+};
 
-    return instance;
-  });
-
-  const { status, message, error } = useAiLibState({
+export function ChatBox<T extends {}>({
+  options,
+  connectOptions,
+  renderMessage,
+}: Props<T>) {
+  const aiLib = useAiLib(options);
+  const { status, streamMessage, fullMessages, error } = useAiLibState({
     aiLib,
     selector: (state) => state,
   });
 
-  const [conversationId] = useState(() => uuid());
+  const [list, setList] = useState<
+    {
+      sender: string;
+      msg: string;
+      error?: string | null;
+      status: 'complete' | 'waiting';
+    }[]
+  >([]);
 
-useEffect(() => {
-    return () => {
-      aiLib.destroy();
-    };
-  }, []);
+  const [inputVal, setInputVal] = useState('');
+
+  const [streamContent, setStreamContent] = useState('');
+
+  useEffect(() => {
+    if (status === 'open') {
+      setStreamContent((pre) => {
+        if (typeof streamMessage === 'object' && streamMessage !== null) {
+          return pre + JSON.stringify(streamMessage);
+        }
+        return pre + (streamMessage || '');
+      });
+    } else if (status === 'closed') {
+      setList((pre) => {
+        const res = [...pre];
+        const lastItem = res[res.length - 1];
+        if (lastItem?.status === 'waiting') {
+          res.splice(res.length - 1, 1, {
+            ...lastItem,
+            msg: streamContent || '好的，停下来了，有问题再问我！',
+            status: 'complete',
+          });
+        }
+
+        console.log('closed:', streamContent, pre, res);
+        return res;
+      });
+      setStreamContent('');
+    } else if (status === 'error') {
+      setList((pre) => {
+        const res = [...pre];
+        const lastItem = res[res.length - 1];
+        if (lastItem?.status === 'waiting') {
+          res.splice(res.length - 1, 1, {
+            ...lastItem,
+            msg: '哦哦，我出错了，请稍后再试！',
+            error: error ? error.errorCode + ', ' + error.errorMessage : null,
+          });
+        }
+        return res;
+      });
+    }
+  }, [status, streamMessage, error]);
 
   const handleChat = (value: string) => {
     aiLib.disconnect();
-    
+    setList((pre) => {
+      const res = [...pre];
+      const lastItem = res[res.length - 1];
+      if (lastItem?.status === 'waiting') {
+        res.splice(res.length - 1, 1, {
+          ...lastItem,
+          msg: streamContent || '好的，停下来了，有问题再问我！',
+          status: 'complete',
+        });
+      }
+      return [
+        ...res,
+        { sender: 'user', msg: value, status: 'complete' },
+        { sender: 'ai', msg: '', status: 'waiting' },
+      ];
+    });
+    setStreamContent('');
     aiLib.connect({
-      url: '/sse/stream?errorType=connection_error',
-      method: 'GET',
-      payload: {
-        conversation_id: conversationId,
-      },
+      ...connectOptions,
+      data: connectOptions.data
+        ? JSON.stringify(connectOptions.data)
+        : undefined,
     });
   };
 
-  // you code
-  ......
+  // const handleChatNoStream = () => {
+  //   aiLib.disconnect();
+  //   setList((pre) => {
+  //     const res = [...pre];
+  //     const lastItem = res[res.length - 1];
+  //     if (lastItem?.status === 'waiting') {
+  //       res.splice(res.length - 1, 1, {
+  //         ...lastItem,
+  //         msg: streamContent || '好的，停下来了，有问题再问我！',
+  //         status: 'complete',
+  //       });
+  //     }
+  //     return [
+  //       ...res,
+  //       { sender: 'user', msg: '测试非推流接口', status: 'complete' },
+  //       { sender: 'ai', msg: '', status: 'waiting' },
+  //     ];
+  //   });
+  //   setStreamContent('');
+  //   aiLib.connect({
+  //     url: 'http://localhost:3030/test-typeorm',
+  //     method: 'GET',
+  //     streaming: false,
+  //   });
+  // };
+
+  const handleStopChat = () => {
+    aiLib.disconnect();
+  };
+
+  return (
+    <div style={{ width: '800px' }}>
+      list:
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          borderBottom: '1px solid gray',
+          height: '300px',
+          overflow: 'auto',
+        }}
+      >
+        {list.map((item, index) =>
+          renderMessage ? (
+            renderMessage(item)
+          ) : (
+            <div
+              style={{
+                width: '30%',
+                background: item.sender === 'ai' ? 'white' : 'lightblue',
+                alignSelf: item.sender === 'ai' ? 'flex-start' : 'flex-end',
+                textAlign: item.sender === 'ai' ? 'left' : 'right',
+                color: 'black',
+                wordBreak: 'break-all',
+              }}
+              key={index}
+            >
+              <div key={index}>
+                {item.status === 'complete'
+                  ? item.msg
+                  : streamContent || 'waiting...'}
+              </div>
+              <div style={{ color: 'red' }}>{item.error}</div>
+            </div>
+          )
+        )}
+      </div>
+      chatBox:
+      <textarea
+        style={{ width: '100%', height: '50px' }}
+        value={inputVal}
+        onChange={(e) => setInputVal(e.target.value)}
+      >
+        {inputVal}
+      </textarea>
+      <button
+        onClick={() => {
+          handleChat(inputVal);
+          setInputVal('');
+        }}
+      >
+        发送
+      </button>
+      {/* <button
+        onClick={() => {
+          handleChat(
+            'image test: this is my menu image:https://fbrdevstorage.blob.core.windows.net/static/fbr-dev/product/file/f11cbad9ae694bd193db35603cdc398e.jpg'
+          );
+        }}
+      >
+        解析图片
+      </button>
+      <button
+        onClick={() => {
+          handleChatNoStream();
+        }}
+      >
+        发送非推流消息
+      </button> */}
+      <button onClick={handleStopChat}>停止回答</button>
+    </div>
+  );
 }
+
 ```

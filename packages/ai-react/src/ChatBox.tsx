@@ -1,35 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { AiLib } from '@connexup/ai-api';
+import { AiLibOptions, RequestOptions } from '@connexup/ai-api';
 import { useAiLibState } from './useAiLibState';
+import { useAiLib } from './useAiLib';
 import { v4 as uuid } from 'uuid';
 
-type Props = {};
+type Props<T> = {
+  options: AiLibOptions & RequestOptions<T>;
+  connectOptions: RequestOptions<T>;
+  renderMessage?: (message: any) => React.ReactNode;
+};
 
-export function ChatBox({}: Props) {
-  const [aiLib] = useState(() => {
-    const instance = new AiLib({
-      baseUrl: 'http://localhost:3030',
-
-      onMessage: (data: any) => {
-        console.log('receive data: ', data);
-        if (data.type === 'end') {
-          instance.disconnect();
-        }
-      },
-      onError: (e: any) => {
-        console.log('receive error: ', e.message);
-      },
-    } as any);
-
-    return instance;
-  });
-
-  const { status, message, error } = useAiLibState({
+export function ChatBox<T extends {}>({
+  options,
+  connectOptions,
+  renderMessage,
+}: Props<T>) {
+  const aiLib = useAiLib(options);
+  const { status, streamMessage, fullMessages, error } = useAiLibState({
     aiLib,
     selector: (state) => state,
   });
-
-  const [conversationId] = useState(() => uuid());
 
   const [list, setList] = useState<
     {
@@ -45,18 +35,12 @@ export function ChatBox({}: Props) {
   const [streamContent, setStreamContent] = useState('');
 
   useEffect(() => {
-    return () => {
-      aiLib.destroy();
-    };
-  }, []);
-
-  useEffect(() => {
     if (status === 'open') {
       setStreamContent((pre) => {
-        if (typeof message === 'object' && message !== null) {
-          return pre + JSON.stringify(message);
+        if (typeof streamMessage === 'object' && streamMessage !== null) {
+          return pre + JSON.stringify(streamMessage);
         }
-        return pre + (message || '');
+        return pre + (streamMessage || '');
       });
     } else if (status === 'closed') {
       setList((pre) => {
@@ -88,7 +72,7 @@ export function ChatBox({}: Props) {
         return res;
       });
     }
-  }, [status, message, error]);
+  }, [status, streamMessage, error]);
 
   const handleChat = (value: string) => {
     aiLib.disconnect();
@@ -110,10 +94,10 @@ export function ChatBox({}: Props) {
     });
     setStreamContent('');
     aiLib.connect({
-      url: '/sse/stream?errorType=connection_error',
-      method: 'GET',
-      payload: {
-        conversation_id: conversationId,
+      ...connectOptions,
+      data: {
+        ...connectOptions.data,
+        message: value,
       },
     });
   };
@@ -161,26 +145,30 @@ export function ChatBox({}: Props) {
           overflow: 'auto',
         }}
       >
-        {list.map((item, index) => (
-          <div
-            style={{
-              width: '30%',
-              background: item.sender === 'ai' ? 'white' : 'lightblue',
-              alignSelf: item.sender === 'ai' ? 'flex-start' : 'flex-end',
-              textAlign: item.sender === 'ai' ? 'left' : 'right',
-              color: 'black',
-              wordBreak: 'break-all',
-            }}
-            key={index}
-          >
-            <div key={index}>
-              {item.status === 'complete'
-                ? item.msg
-                : streamContent || 'waiting...'}
+        {list.map((item, index) =>
+          renderMessage ? (
+            renderMessage(item)
+          ) : (
+            <div
+              style={{
+                width: '30%',
+                background: item.sender === 'ai' ? 'white' : 'lightblue',
+                alignSelf: item.sender === 'ai' ? 'flex-start' : 'flex-end',
+                textAlign: item.sender === 'ai' ? 'left' : 'right',
+                color: 'black',
+                wordBreak: 'break-all',
+              }}
+              key={index}
+            >
+              <div key={index}>
+                {item.status === 'complete'
+                  ? item.msg
+                  : streamContent || 'waiting...'}
+              </div>
+              <div style={{ color: 'red' }}>{item.error}</div>
             </div>
-            <div style={{ color: 'red' }}>{item.error}</div>
-          </div>
-        ))}
+          )
+        )}
       </div>
       chatBox:
       <textarea

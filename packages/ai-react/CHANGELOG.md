@@ -1,5 +1,13 @@
 # @connexup/ai-react
 
+## 1.0.5
+
+### Patch Changes
+
+- optimize: options params
+- Updated dependencies
+  - @connexup/ai-api@1.0.4
+
 ## 1.0.4
 
 ### Patch Changes

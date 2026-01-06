@@ -13,12 +13,18 @@ export interface RequestOptions<T> {
   streaming?: boolean;
 }
 
-export type EventSourceStatus =
-  | 'idle'
-  | 'connecting'
-  | 'open'
-  | 'closed'
-  | 'error';
+export enum EventSourceStatusEnum {
+  IDLE = 'idle',
+  CONNECTING = 'connecting',
+  OPEN = 'open',
+  CLOSED = 'closed',
+  ERROR = 'error',
+}
+
+export type AiLibError = null | {
+  errorCode: null | string | number;
+  errorMessage: null | string;
+};
 
 export interface SSEListeners {
   // onNotice?: (event: Event) => void;
@@ -32,16 +38,15 @@ export interface SSEListeners {
 export type AiLibOptions = BaseRequestOption &
   Partial<SSEListeners> & {
     loggerUrl?: string;
+    retryAttempts?: number; // default 3
+    acceptMsgTypes?: string[];
   };
 
 export interface AiLibState {
-  status: EventSourceStatus;
+  status: EventSourceStatusEnum;
   streamMessage: null | Record<string, any>;
   fullMessages: Record<string, any>[];
-  error: null | {
-    errorCode: null | string | number;
-    errorMessage: null | string;
-  };
+  error: AiLibError;
   // allMessages: Record<string, any>[];
 }
 
@@ -50,4 +55,9 @@ export interface EditorEvents {
     eventsource: EventSource | null;
     aiLibState: AiLibState;
   };
+}
+
+export enum MsgTypeEnum {
+  End = 'end',
+  AgentResponse = 'agent_response',
 }

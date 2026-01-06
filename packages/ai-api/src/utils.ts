@@ -55,3 +55,5 @@ export function urlParams(pattern: string, params: object): string {
   });
   return url;
 }
+
+export const defaultRetryTimes = 3;

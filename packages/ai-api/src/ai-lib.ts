@@ -1,12 +1,14 @@
 import { EventSource } from 'eventsource';
 import { EventEmitter } from './event-emitter';
 import { v4 as uuid } from 'uuid';
-import { mergeRequestOptions, safeParse } from './utils';
+import { mergeRequestOptions, safeParse, defaultRetryTimes } from './utils';
 import {
   AiLibOptions,
   AiLibState,
   BaseRequestOption,
   EditorEvents,
+  EventSourceStatusEnum,
+  MsgTypeEnum,
   RequestOptions,
   SSEListeners,
 } from './types';
@@ -22,7 +24,7 @@ export class AiLib<
   #connectingTimes: number = 0;
   #traceId: string | null = null;
   #aiLibState: AiLibState = {
-    status: 'idle',
+    status: EventSourceStatusEnum.IDLE,
     streamMessage: null,
     fullMessages: [],
     error: null,
@@ -39,6 +41,10 @@ export class AiLib<
   #onDisconnect?: SSEListeners['onDisconnect'];
 
   #logger: Logger;
+  #retryAttempts: number = defaultRetryTimes;
+  #retryCount: number = 0;
+
+  #acceptMsgTypes: string[] = [];
 
   public get aiLibState(): AiLibState {
     return this.#aiLibState;
@@ -46,8 +52,16 @@ export class AiLib<
 
   constructor(options: AiLibOptions) {
     super();
-    const { loggerUrl, baseUrl, onOpen, onMessage, onError, onDisconnect } =
-      options;
+    const {
+      loggerUrl,
+      retryAttempts,
+      baseUrl,
+      acceptMsgTypes,
+      onOpen,
+      onMessage,
+      onError,
+      onDisconnect,
+    } = options;
 
     this.#baseRequestOptions = {
       baseUrl,
@@ -59,6 +73,9 @@ export class AiLib<
     this.#onDisconnect = onDisconnect;
 
     this.#logger = new Logger(loggerUrl || '');
+    this.#retryAttempts = retryAttempts ?? defaultRetryTimes;
+
+    this.#acceptMsgTypes = acceptMsgTypes || [MsgTypeEnum.AgentResponse];
   }
 
   #updateState(state: Partial<AiLibState>) {
@@ -89,12 +106,13 @@ export class AiLib<
     // onopen callback may be called many times by EventSource auto-retry
     this.#startTime = null;
     this.#connectingTimes++;
+    this.#retryCount = 0;
 
     this.#eventSource?.addEventListener('message', this.#handleMessage);
-    this.#eventSource?.addEventListener('error', this.#handleError);
+    // this.#eventSource?.addEventListener('error', this.#handleError);
 
     this.#updateState({
-      status: 'open',
+      status: EventSourceStatusEnum.OPEN,
       streamMessage: null,
       error: null,
     });
@@ -116,23 +134,16 @@ export class AiLib<
     const message = safeParse(e.data);
 
     if (!message) return;
-    if (message.type === 'end') {
+    if (message.type === MsgTypeEnum.End) {
       this.#disconnectUseEventSource();
       return;
     }
 
-    // ??? todo: unify message type with backend
-    if (
-      message.type === 'agent_response' ||
-      message.type === 'menu_table' ||
-      message.type === 'menu_preview'
-    ) {
-      const streamMessage =
-        message.content || message.table_config || message.preview_config;
+    if (this.#acceptMsgTypes.includes(message.type)) {
       this.#updateState({
-        status: 'open',
-        fullMessages: [...this.#aiLibState.fullMessages, streamMessage],
-        streamMessage,
+        status: EventSourceStatusEnum.OPEN,
+        fullMessages: [...this.#aiLibState.fullMessages, message],
+        streamMessage: message,
         error: null,
       });
 
@@ -142,15 +153,6 @@ export class AiLib<
 
   // ??? todo: unify error data with backend
   #handleError = (e: Event) => {
-    // this.#logger.error({
-    //   action: 'SSE_ERROR',
-    //   info: {
-    //     traceId: this.#traceId!,
-    //   },
-    //   error_code: e.code,
-    //   error_message: e.message,
-    // });
-
     let exception: any;
 
     try {
@@ -168,14 +170,14 @@ export class AiLib<
         exception = new NetworkConnectionException(
           `Failed to connect: ${(e.target as EventSource).url}`,
           (e.target as EventSource).url,
-          (e as any).data || 'UNKNOWN'
+          (e as any).data || (e as any).message || 'UNKNOWN'
         );
       }
     } catch (error) {
       exception = new NetworkConnectionException(
         `Failed to connect: ${(e.target as EventSource).url}`,
         (e.target as EventSource).url,
-        (e as any).data || 'UNKNOWN'
+        (e as any).data || (e as any).message || 'UNKNOWN'
       );
     }
 
@@ -187,8 +189,15 @@ export class AiLib<
     });
     // console.error(`-------SSE error ${e}`);
 
+    if (this.#retryCount >= this.#retryAttempts) {
+      this.disconnect();
+      return;
+    }
+
+    this.#retryCount++;
+
     this.#updateState({
-      status: 'error',
+      status: EventSourceStatusEnum.ERROR,
       streamMessage: null,
       error: {
         errorCode: exception!.errorCode,
@@ -210,6 +219,7 @@ export class AiLib<
 
     this.#startTime = Date.now();
     this.#traceId = uuid();
+    this.#retryCount = 0;
 
     // console.log(`-------SSE start connect at ${this.#startTime}`);
 
@@ -254,20 +264,21 @@ export class AiLib<
         }),
     });
     this.#updateState({
-      status: 'connecting',
+      status: EventSourceStatusEnum.CONNECTING,
       streamMessage: null,
       fullMessages: [],
       error: null,
     });
 
     this.#eventSource.addEventListener('open', this.#handleOpen);
+    this.#eventSource?.addEventListener('error', this.#handleError);
   }
 
   #useFetch(requestOptions: RequestOptions<T>) {
     this.#ajaxController = new AbortController();
     this.#connectingTimes = 1;
     this.#updateState({
-      status: 'open',
+      status: EventSourceStatusEnum.OPEN,
       streamMessage: null,
       fullMessages: [],
       error: null,
@@ -329,6 +340,7 @@ export class AiLib<
       })
       .then(async (data) => {
         this.#updateState({
+          status: EventSourceStatusEnum.CLOSED,
           streamMessage: data,
           fullMessages: [data],
           error: null,
@@ -351,7 +363,7 @@ export class AiLib<
         this.#updateState({
           streamMessage: null,
           fullMessages: [],
-          status: 'error',
+          status: EventSourceStatusEnum.ERROR,
           error: {
             errorCode: e.errorCode || e.statusCode,
             errorMessage: e.message,
@@ -367,6 +379,7 @@ export class AiLib<
   disconnect() {
     this.#disconnectUseEventSource();
     this.#disconnectUseFetch();
+    this.#retryCount = 0;
   }
 
   #disconnectUseEventSource() {
@@ -383,8 +396,10 @@ export class AiLib<
       this.#eventSource.removeEventListener('error', this.#handleError);
       this.#eventSource.close();
       // close 之后 readyState 会变为 CLOSED
+      this.#eventSource = null;
+
       this.#updateState({
-        status: 'closed',
+        status: EventSourceStatusEnum.CLOSED,
       });
 
       this.#logger.info({
@@ -409,7 +424,7 @@ export class AiLib<
       this.#ajaxController.abort();
       this.#ajaxController = undefined;
       this.#updateState({
-        status: 'closed',
+        status: EventSourceStatusEnum.CLOSED,
       });
 
       this.#logger.info({
@@ -424,9 +439,8 @@ export class AiLib<
 
   destroy() {
     this.disconnect();
-    this.#eventSource = null;
     this.#updateState({
-      status: 'idle',
+      status: EventSourceStatusEnum.IDLE,
       streamMessage: null,
       fullMessages: [],
       error: null,

@@ -1,5 +1,13 @@
 # @connexup/ai-react
 
+## 1.0.6
+
+### Patch Changes
+
+- update params: support input accepted message type and error retry times
+- Updated dependencies
+  - @connexup/ai-api@1.0.5
+
 ## 1.0.5
 
 ### Patch Changes

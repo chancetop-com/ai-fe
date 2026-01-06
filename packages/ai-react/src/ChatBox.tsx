@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { AiLibOptions, RequestOptions } from '@connexup/ai-api';
+import { AiLibOptions, AiLibState, RequestOptions } from '@connexup/ai-api';
 import { useAiLibState } from './useAiLibState';
 import { useAiLib } from './useAiLib';
-import { v4 as uuid } from 'uuid';
 
 type Props<T> = {
   options: AiLibOptions & RequestOptions<T>;
   connectOptions: RequestOptions<T>;
   renderMessage?: (message: any) => React.ReactNode;
+  onStateChange?: (state: AiLibState) => void;
 };
 
 export function ChatBox<T extends {}>({
   options,
   connectOptions,
   renderMessage,
+  onStateChange,
 }: Props<T>) {
   const aiLib = useAiLib(options);
   const { status, streamMessage, fullMessages, error } = useAiLibState({
@@ -37,10 +38,13 @@ export function ChatBox<T extends {}>({
   useEffect(() => {
     if (status === 'open') {
       setStreamContent((pre) => {
-        if (typeof streamMessage === 'object' && streamMessage !== null) {
-          return pre + JSON.stringify(streamMessage);
-        }
-        return pre + (streamMessage || '');
+        if (!streamMessage) return pre;
+
+        const res = renderMessage
+          ? renderMessage(streamMessage)
+          : streamMessage?.content;
+        console.log('res: ', res);
+        return pre + (res || '');
       });
     } else if (status === 'closed') {
       setList((pre) => {
@@ -72,6 +76,12 @@ export function ChatBox<T extends {}>({
         return res;
       });
     }
+    onStateChange?.({
+      status,
+      streamMessage,
+      error,
+      fullMessages,
+    });
   }, [status, streamMessage, error]);
 
   const handleChat = (value: string) => {
@@ -145,30 +155,26 @@ export function ChatBox<T extends {}>({
           overflow: 'auto',
         }}
       >
-        {list.map((item, index) =>
-          renderMessage ? (
-            renderMessage(item)
-          ) : (
-            <div
-              style={{
-                width: '30%',
-                background: item.sender === 'ai' ? 'white' : 'lightblue',
-                alignSelf: item.sender === 'ai' ? 'flex-start' : 'flex-end',
-                textAlign: item.sender === 'ai' ? 'left' : 'right',
-                color: 'black',
-                wordBreak: 'break-all',
-              }}
-              key={index}
-            >
-              <div key={index}>
-                {item.status === 'complete'
-                  ? item.msg
-                  : streamContent || 'waiting...'}
-              </div>
-              <div style={{ color: 'red' }}>{item.error}</div>
+        {list.map((item, index) => (
+          <div
+            style={{
+              width: '30%',
+              background: item.sender === 'ai' ? 'white' : 'lightblue',
+              alignSelf: item.sender === 'ai' ? 'flex-start' : 'flex-end',
+              textAlign: item.sender === 'ai' ? 'left' : 'right',
+              color: 'black',
+              wordBreak: 'break-all',
+            }}
+            key={index}
+          >
+            <div key={index}>
+              {item.status === 'complete'
+                ? item.msg
+                : streamContent || 'waiting...'}
             </div>
-          )
-        )}
+            <div style={{ color: 'red' }}>{item.error}</div>
+          </div>
+        ))}
       </div>
       chatBox:
       <textarea

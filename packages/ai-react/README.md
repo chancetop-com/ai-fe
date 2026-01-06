@@ -44,10 +44,19 @@ export function ChatBox<T extends {}>({
   useEffect(() => {
     if (status === 'open') {
       setStreamContent((pre) => {
-        if (typeof streamMessage === 'object' && streamMessage !== null) {
-          return pre + JSON.stringify(streamMessage);
+        if (!streamMessage) return pre;
+        let content: any;
+        if (streamMessage.type === 'agent_response') {
+          content = streamMessage.content;
+        } else if (streamMessage.type === 'menu_table') {
+          content = streamMessage.table_config;
+        } else if (streamMessage.type === 'menu_preview') {
+          content = streamMessage.message.preview_config;
         }
-        return pre + (streamMessage || '');
+        if (typeof content === 'object' && content !== null) {
+          return pre + JSON.stringify(content);
+        }
+        return pre + (content || '');
       });
     } else if (status === 'closed') {
       setList((pre) => {

@@ -7,6 +7,8 @@ import { AiLib } from '@connexup/ai-api';
 const aiLib = new AiLib({
   loggerUrl: "",
   baseUrl: "http://localhost:3030",
+  // retryAttempts: 3, //default 3, when error occurs, retry request times
+  // acceptMsgTypes: ["agent_response"], // default ["agent_response"], when receive message, trigger callback
   onMessage: (data) => {
     console.log('receive data: ', data);
   },

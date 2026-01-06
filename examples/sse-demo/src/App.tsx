@@ -1,3 +1,4 @@
+import type { AiLibState } from '@connexup/ai-api';
 import { ChatBox } from '@connexup/ai-react';
 
 function App() {
@@ -5,6 +6,8 @@ function App() {
     <ChatBox
       options={{
         baseUrl: 'https://sse-test.connexup-uat.net',
+        // baseUrl: 'http://localhost:3030',
+        acceptMsgTypes: ['agent_response', 'menu_table', 'menu_preview'],
         onMessage: (data: any) => {
           console.log('receive data: ', data);
         },
@@ -21,6 +24,24 @@ function App() {
           merchant_name: 'Chancetop Edit',
           user_id: '7e56d5c7-2391-4d8a-b287-836589a6e76f',
         },
+        // url: '/sse/stream?errorType=connection_error',
+      }}
+      renderMessage={(streamMessage: any) => {
+        let content: any;
+        if (streamMessage.type === 'agent_response') {
+          content = streamMessage.content;
+        } else if (streamMessage.type === 'menu_table') {
+          content = streamMessage.table_config;
+        } else if (streamMessage.type === 'menu_preview') {
+          content = streamMessage.preview_config;
+        }
+        if (typeof content === 'object' && content !== null) {
+          return JSON.stringify(content);
+        }
+        return content || '';
+      }}
+      onStateChange={(state: AiLibState) => {
+        console.log('state', state);
       }}
     />
   );

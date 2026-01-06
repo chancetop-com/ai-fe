@@ -1,5 +1,11 @@
 # @connexup/ai-api
 
+## 1.0.5
+
+### Patch Changes
+
+- update params: support input accepted message type and error retry times
+
 ## 1.0.4
 
 ### Patch Changes

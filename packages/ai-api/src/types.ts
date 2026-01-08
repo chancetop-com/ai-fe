@@ -33,6 +33,7 @@ export interface SSEListeners {
   onMessage: (data: any) => void;
   onError: (event: Event) => void;
   onDisconnect: () => void;
+  onStateUpdate: (state: AiLibState) => void;
 }
 
 export type AiLibOptions = BaseRequestOption &

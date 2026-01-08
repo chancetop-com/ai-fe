@@ -132,12 +132,14 @@ export class Logger {
       errorCode = 'JAVASCRIPT_ERROR';
     }
 
-    this.createLog(isWarning ? 'WARN' : 'ERROR', {
-      ...entry,
-      errorCode,
-      errorMessage: exception.message,
-      info,
-    });
+    this.send(
+      this.createLog(isWarning ? 'WARN' : 'ERROR', {
+        ...entry,
+        errorCode,
+        errorMessage: exception.message,
+        info,
+      })
+    );
   }
 
   async send(log: Log | undefined) {

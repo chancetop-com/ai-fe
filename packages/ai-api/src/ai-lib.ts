@@ -39,6 +39,7 @@ export class AiLib<
   #onMessage?: SSEListeners['onMessage'];
   #onError?: SSEListeners['onError'];
   #onDisconnect?: SSEListeners['onDisconnect'];
+  #onStateUpdate?: SSEListeners['onStateUpdate'];
 
   #logger: Logger;
   #retryAttempts: number = defaultRetryTimes;
@@ -61,6 +62,7 @@ export class AiLib<
       onMessage,
       onError,
       onDisconnect,
+      onStateUpdate,
     } = options;
 
     this.#baseRequestOptions = {
@@ -71,6 +73,7 @@ export class AiLib<
     this.#onMessage = onMessage;
     this.#onError = onError;
     this.#onDisconnect = onDisconnect;
+    this.#onStateUpdate = onStateUpdate;
 
     this.#logger = new Logger(loggerUrl || '');
     this.#retryAttempts = retryAttempts ?? defaultRetryTimes;
@@ -88,6 +91,8 @@ export class AiLib<
       eventsource: this.#eventSource,
       aiLibState: this.#aiLibState,
     });
+
+    this.#onStateUpdate?.(this.#aiLibState);
   }
 
   #handleOpen = (e: Event) => {

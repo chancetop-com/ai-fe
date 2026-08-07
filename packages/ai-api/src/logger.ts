@@ -1,9 +1,4 @@
-import {
-  APIException,
-  Exception,
-  JavaScriptException,
-  NetworkConnectionException,
-} from './exception';
+import { APIException, Exception, JavaScriptException, NetworkConnectionException } from './exception';
 
 interface Log {
   date: Date;
@@ -35,10 +30,7 @@ export class Logger {
     this.url = url;
   }
 
-  private createLog(
-    result: 'OK' | 'WARN' | 'ERROR',
-    entry: InfoLogEntry | ErrorLogEntry
-  ): Log | undefined {
+  private createLog(result: 'OK' | 'WARN' | 'ERROR', entry: InfoLogEntry | ErrorLogEntry): Log | undefined {
     if (!this.url) {
       console.info(`==== ${result} ====`);
       let error: string | undefined;
@@ -78,10 +70,7 @@ export class Logger {
       info,
       stats,
       errorCode: 'errorCode' in entry ? entry.errorCode : undefined,
-      errorMessage:
-        'errorMessage' in entry
-          ? entry.errorMessage.substring(0, 1000)
-          : undefined,
+      errorMessage: 'errorMessage' in entry ? entry.errorMessage.substring(0, 1000) : undefined,
     };
   }
 
@@ -104,10 +93,7 @@ export class Logger {
       info['api_url'] = exception.requestURL;
       info['original_message'] = exception.originalErrorMessage;
     } else if (exception instanceof APIException) {
-      if (
-        exception.statusCode === 400 &&
-        exception.errorCode === 'VALIDATION_ERROR'
-      ) {
+      if (exception.statusCode === 400 && exception.errorCode === 'VALIDATION_ERROR') {
         isWarning = false;
         errorCode = 'API_VALIDATION_ERROR';
       } else {

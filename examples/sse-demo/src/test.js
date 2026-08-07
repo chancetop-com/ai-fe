@@ -1,21 +1,21 @@
 import { AiLib } from '@connexup/ai-api';
 
 const test = new AiLib({
-  // loggerUrl: "",
   baseUrl: 'http://localhost:3030',
-  onMessage: (data) => {
-    console.log('receive data: ', data);
-    if (data.type === 'end') {
-      test.disconnect();
-    }
+  sessionId: 'test-session-id',
+});
+
+test.subscribe({
+  onMessage: (event) => {
+    console.log('receive event: ', event);
   },
-  onError: (e) => {
-    console.log('receive error: ', e);
+  onError: (error) => {
+    console.log('receive error: ', error);
   },
 });
 
-test.connect({
-  url: '/sse/stream?errorType=connection_error',
+test.sendMessage({
+  message: 'hello',
 });
 
 setTimeout(() => {

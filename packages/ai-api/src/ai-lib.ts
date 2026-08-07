@@ -1,456 +1,341 @@
-import { EventSource } from 'eventsource';
-import { EventEmitter } from './event-emitter';
+import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { v4 as uuid } from 'uuid';
-import { mergeRequestOptions, safeParse, defaultRetryTimes } from './utils';
 import {
-  AiLibOptions,
-  AiLibState,
-  BaseRequestOption,
-  EditorEvents,
-  EventSourceStatusEnum,
-  MsgTypeEnum,
-  RequestOptions,
-  SSEListeners,
-} from './types';
+  isSseErrorEvent,
+  isSseEvent,
+  isSseStatusChangeEvent,
+  SseEvent,
+  SseEventType,
+  SessionStatus,
+} from './sse-events';
+import { AiLibError, AiLibOptions, AiLibSubscription, StreamStatusEnum, SendMessageStreamOptions } from './types';
 import { Logger } from './logger';
-import { APIException, NetworkConnectionException } from './exception';
+import {
+  asAPIException,
+  createAPIExceptionFromResponse,
+  normalizeRequestError,
+  parseErrorResponse,
+} from './api-request';
+import { buildAuthHeaders, buildMessageStreamUrl, safeParse } from './utils';
 
-export class AiLib<
-  T extends Record<string, any> = any,
-> extends EventEmitter<EditorEvents> {
-  #baseRequestOptions: BaseRequestOption;
-  #eventSource: EventSource | null = null;
+interface ResolvedStreamOptions {
+  url: string;
+  headers: Record<string, string>;
+  body: string;
+}
+
+export class AiLib {
+  #baseUrl: string;
+  #apiKey?: string;
+  #defaultSessionId?: string;
+  #streamPath: string;
+  #abortController: AbortController | null = null;
   #startTime: number | null = null;
-  #connectingTimes: number = 0;
+  #connectingTimes = 0;
   #traceId: string | null = null;
-  #aiLibState: AiLibState = {
-    status: EventSourceStatusEnum.IDLE,
-    streamMessage: null,
-    fullMessages: [],
-    error: null,
-    // allMessages: [],
-  };
-  #ajaxController: AbortController | undefined;
-  #getRequestOptions(incomingOptions: RequestOptions<T>): RequestOptions<T> {
-    return mergeRequestOptions(this.#baseRequestOptions, incomingOptions);
-  }
-
-  #onOpen?: SSEListeners['onOpen'];
-  #onMessage?: SSEListeners['onMessage'];
-  #onError?: SSEListeners['onError'];
-  #onDisconnect?: SSEListeners['onDisconnect'];
-  #onStateUpdate?: SSEListeners['onStateUpdate'];
+  #streamStatus: StreamStatusEnum = StreamStatusEnum.IDLE;
+  #sessionStatus: SessionStatus | null = null;
+  #error: AiLibError = null;
+  #subscribers = new Set<AiLibSubscription>();
 
   #logger: Logger;
-  #retryAttempts: number = defaultRetryTimes;
-  #retryCount: number = 0;
+  #acceptEventTypes: SseEventType[] | null = null;
+  #isManualDisconnect = false;
+  #streamPromise: Promise<void> | null = null;
 
-  #acceptMsgTypes: string[] = [];
+  public get streamStatus(): StreamStatusEnum {
+    return this.#streamStatus;
+  }
 
-  public get aiLibState(): AiLibState {
-    return this.#aiLibState;
+  public get sessionStatus(): SessionStatus | null {
+    return this.#sessionStatus;
+  }
+
+  public get error(): AiLibError {
+    return this.#error;
+  }
+
+  setApiKey(apiKey: string | undefined) {
+    this.#apiKey = apiKey;
   }
 
   constructor(options: AiLibOptions) {
-    super();
-    const {
-      loggerUrl,
-      retryAttempts,
-      baseUrl,
-      acceptMsgTypes,
-      onOpen,
-      onMessage,
-      onError,
-      onDisconnect,
-      onStateUpdate,
-    } = options;
+    const { loggerUrl, baseUrl, apiKey, sessionId, streamPath, acceptEventTypes } = options;
 
-    this.#baseRequestOptions = {
-      baseUrl,
-    };
-
-    this.#onOpen = onOpen;
-    this.#onMessage = onMessage;
-    this.#onError = onError;
-    this.#onDisconnect = onDisconnect;
-    this.#onStateUpdate = onStateUpdate;
+    this.#baseUrl = baseUrl;
+    this.#apiKey = apiKey;
+    this.#defaultSessionId = sessionId;
+    this.#streamPath = streamPath ?? '/api/sessions/messages/stream';
 
     this.#logger = new Logger(loggerUrl || '');
-    this.#retryAttempts = retryAttempts ?? defaultRetryTimes;
-
-    this.#acceptMsgTypes = acceptMsgTypes || [MsgTypeEnum.AgentResponse];
+    this.#acceptEventTypes = acceptEventTypes ?? null;
   }
 
-  #updateState(state: Partial<AiLibState>) {
-    this.#aiLibState = {
-      ...this.#aiLibState,
-      ...state,
+  subscribe(handlers: AiLibSubscription): () => void {
+    this.#subscribers.add(handlers);
+    return () => {
+      this.#subscribers.delete(handlers);
     };
-
-    this.emit('update', {
-      eventsource: this.#eventSource,
-      aiLibState: this.#aiLibState,
-    });
-
-    this.#onStateUpdate?.(this.#aiLibState);
   }
 
-  #handleOpen = (e: Event) => {
-    this.#logger.info({
-      action: 'SSE_OPEN',
-      info: {
-        traceId: this.#traceId!,
-        url: (e.target as EventSource).url,
-        eventsourceState: `${(e.target as EventSource).readyState}`,
-      },
-      stats: {
-        connectingTimes: this.#connectingTimes,
-      },
-    });
-    // console.log('-------SSE open', e);
-    // onopen callback may be called many times by EventSource auto-retry
-    this.#startTime = null;
-    this.#connectingTimes++;
-    this.#retryCount = 0;
+  #notifyOpen() {
+    for (const subscriber of this.#subscribers) {
+      subscriber.onOpen?.();
+    }
+  }
 
-    this.#eventSource?.addEventListener('message', this.#handleMessage);
-    // this.#eventSource?.addEventListener('error', this.#handleError);
+  #notifyMessage(event: SseEvent) {
+    for (const subscriber of this.#subscribers) {
+      subscriber.onMessage?.(event);
+    }
+  }
 
-    this.#updateState({
-      status: EventSourceStatusEnum.OPEN,
-      streamMessage: null,
-      error: null,
-    });
+  #notifyError(error: Error) {
+    for (const subscriber of this.#subscribers) {
+      subscriber.onError?.(error);
+    }
+  }
 
-    this.#logger.info({
-      action: 'SSE_OPEN',
-      info: {
-        traceId: this.#traceId!,
-      },
-      stats: {
-        connectingTimes: this.#connectingTimes,
-      },
-    });
+  #notifyDisconnect() {
+    for (const subscriber of this.#subscribers) {
+      subscriber.onDisconnect?.();
+    }
+  }
 
-    this.#onOpen?.();
-  };
+  #setStreamStatus(streamStatus: StreamStatusEnum) {
+    this.#streamStatus = streamStatus;
+  }
 
-  #handleMessage = (e: EventSourceEventMap['message']) => {
-    const message = safeParse(e.data);
+  #setError(error: AiLibError) {
+    this.#error = error;
+  }
 
-    if (!message) return;
-    if (message.type === MsgTypeEnum.End) {
-      this.#disconnectUseEventSource();
-      return;
+  #resolveStreamOptions(incomingOptions: SendMessageStreamOptions): ResolvedStreamOptions {
+    const sessionId = incomingOptions.sessionId ?? this.#defaultSessionId;
+    if (!sessionId) {
+      throw new Error('sessionId is required to stream messages');
     }
 
-    if (this.#acceptMsgTypes.includes(message.type)) {
-      this.#updateState({
-        status: EventSourceStatusEnum.OPEN,
-        fullMessages: [...this.#aiLibState.fullMessages, message],
-        streamMessage: message,
-        error: null,
+    const message = incomingOptions.message?.trim() ?? '';
+    const attachments = incomingOptions.attachments;
+    if (!message && (!attachments || attachments.length === 0)) {
+      throw new Error('message or attachments is required to stream messages');
+    }
+
+    const apiKey = incomingOptions.apiKey ?? this.#apiKey;
+    const headers = buildAuthHeaders(apiKey, {
+      Accept: 'text/event-stream',
+      'Content-Type': 'application/json',
+      ...incomingOptions.headers,
+    });
+
+    return {
+      url: buildMessageStreamUrl(this.#baseUrl, sessionId, this.#streamPath),
+      headers,
+      body: JSON.stringify({
+        message,
+        variables: incomingOptions.variables,
+        attachments,
+      }),
+    };
+  }
+
+  #shouldAcceptEvent(event: SseEvent): boolean {
+    if (!this.#acceptEventTypes) return true;
+    return this.#acceptEventTypes.includes(event.type as SseEventType);
+  }
+
+  #handleSseEvent(event: SseEvent) {
+    if (!this.#shouldAcceptEvent(event)) return;
+
+    if (isSseStatusChangeEvent(event)) {
+      this.#sessionStatus = event.status;
+    }
+
+    if (isSseErrorEvent(event)) {
+      this.#setError({
+        errorCode: 'sse_error',
+        errorMessage: event.message,
       });
-
-      this.#onMessage?.(message);
-    }
-  };
-
-  // ??? todo: unify error data with backend
-  #handleError = (e: Event) => {
-    let exception: any;
-
-    try {
-      const originErrorData = safeParse((e as any).data);
-      if (originErrorData.error_code) {
-        exception = new APIException(
-          originErrorData.error_message || `[No Response]`,
-          200,
-          (e.target as EventSource).url,
-          originErrorData,
-          originErrorData.error_id || null,
-          originErrorData.error_code
-        );
-      } else {
-        exception = new NetworkConnectionException(
-          `Failed to connect: ${(e.target as EventSource).url}`,
-          (e.target as EventSource).url,
-          (e as any).data || (e as any).message || 'UNKNOWN'
-        );
-      }
-    } catch (error) {
-      exception = new NetworkConnectionException(
-        `Failed to connect: ${(e.target as EventSource).url}`,
-        (e.target as EventSource).url,
-        (e as any).data || (e as any).message || 'UNKNOWN'
-      );
+      this.#logger.info({
+        action: 'SSE_EVENT_ERROR',
+        info: {
+          traceId: this.#traceId!,
+          message: event.message,
+          detail: event.detail,
+        },
+      });
     }
 
-    this.#logger.exception(exception, {
+    this.#setStreamStatus(StreamStatusEnum.OPEN);
+    this.#notifyMessage(event);
+
+    if (isSseStatusChangeEvent(event) && event.status === 'error') {
+      this.#closeStream({
+        streamStatus: StreamStatusEnum.ERROR,
+        error: {
+          errorCode: 'session_error',
+          errorMessage: 'Session entered error state',
+        },
+      });
+    }
+  }
+
+  #closeStream(options?: { streamStatus?: StreamStatusEnum; error?: AiLibError; notify?: boolean }) {
+    const { streamStatus = StreamStatusEnum.CLOSED, error = null, notify = true } = options ?? {};
+
+    this.#isManualDisconnect = true;
+
+    if (this.#abortController) {
+      this.#abortController.abort();
+      this.#abortController = null;
+    }
+
+    this.#streamPromise = null;
+    this.#setStreamStatus(streamStatus);
+    if (error) {
+      this.#setError(error);
+    }
+
+    this.#logger.info({
+      action: 'SSE_DISCONNECTED',
+      info: {
+        traceId: this.#traceId!,
+        streamStatus,
+      },
+    });
+
+    if (notify) {
+      this.#notifyDisconnect();
+    }
+  }
+
+  #handleStreamError(error: Error) {
+    if (this.#isManualDisconnect) return;
+
+    this.#logger.exception(error, {
       action: 'SSE_ERROR',
       info: {
         traceId: this.#traceId!,
       },
     });
-    // console.error(`-------SSE error ${e}`);
 
-    if (this.#retryCount >= this.#retryAttempts) {
-      this.disconnect();
-      return;
-    }
-
-    this.#retryCount++;
-
-    this.#updateState({
-      status: EventSourceStatusEnum.ERROR,
-      streamMessage: null,
-      error: {
-        errorCode: exception!.errorCode,
-        errorMessage: exception.message,
-      },
+    this.#setStreamStatus(StreamStatusEnum.ERROR);
+    const apiError = asAPIException(error);
+    this.#setError({
+      errorCode: apiError?.errorCode ?? 'network_error',
+      errorMessage: apiError?.message ?? error.message,
     });
+    this.#notifyError(apiError ?? error);
+  }
 
-    this.#onError?.(e);
-  };
+  #finishStream(shouldNotify = true) {
+    this.#closeStream({ notify: shouldNotify });
+  }
 
-  connect(incomingOptions: RequestOptions<T>) {
-    const sseState = this.#eventSource?.readyState;
-    if (sseState === EventSource.CONNECTING || sseState === EventSource.OPEN)
-      return;
-
-    if (this.#ajaxController) {
-      return;
+  sendMessage(incomingOptions: SendMessageStreamOptions) {
+    if (this.#streamPromise) {
+      this.disconnect();
     }
 
     this.#startTime = Date.now();
     this.#traceId = uuid();
-    this.#retryCount = 0;
+    this.#isManualDisconnect = false;
+    this.#abortController = new AbortController();
 
-    // console.log(`-------SSE start connect at ${this.#startTime}`);
-
-    const mergeOptions = this.#getRequestOptions(incomingOptions);
+    const streamOptions = this.#resolveStreamOptions(incomingOptions);
 
     this.#logger.info({
       action: 'SSE_START',
       info: {
         traceId: this.#traceId!,
-        url: mergeOptions.url,
-        method: mergeOptions.method,
-        data: mergeOptions.data ? JSON.stringify(mergeOptions.data) : undefined,
-        headers: JSON.stringify(mergeOptions.headers),
-        streaming: (mergeOptions.streaming ?? true).toString(),
+        url: streamOptions.url,
+        method: 'POST',
+        headers: JSON.stringify(streamOptions.headers),
+        body: streamOptions.body,
       },
       stats: {
         startTime: this.#startTime,
       },
     });
 
-    if (mergeOptions.streaming !== undefined && !mergeOptions.streaming) {
-      return this.#useFetch(mergeOptions);
-    } else {
-      return this.#useEventSource(mergeOptions);
-    }
+    this.#setStreamStatus(StreamStatusEnum.CONNECTING);
+    this.#setError(null);
+
+    this.#streamPromise = this.#startStream(streamOptions);
   }
 
-  #useEventSource(requestOptions: RequestOptions<T>) {
-    const { url, method = 'GET', headers = {}, data } = requestOptions;
-    this.#eventSource = new EventSource(url!, {
-      fetch: (input, init) =>
-        fetch(input, {
-          ...init,
-          method,
-          body: data ? JSON.stringify(data) : null,
-          headers: {
-            'content-type': 'application/json',
-            ...headers,
-            ...init?.headers,
-            'x-trace-id': this.#traceId!,
-          },
-        }),
-    });
-    this.#updateState({
-      status: EventSourceStatusEnum.CONNECTING,
-      streamMessage: null,
-      fullMessages: [],
-      error: null,
-    });
+  async #startStream(streamOptions: ResolvedStreamOptions) {
+    const abortController = this.#abortController;
+    if (!abortController) return;
 
-    this.#eventSource.addEventListener('open', this.#handleOpen);
-    this.#eventSource?.addEventListener('error', this.#handleError);
-  }
-
-  #useFetch(requestOptions: RequestOptions<T>) {
-    this.#ajaxController = new AbortController();
-    this.#connectingTimes = 1;
-    this.#updateState({
-      status: EventSourceStatusEnum.OPEN,
-      streamMessage: null,
-      fullMessages: [],
-      error: null,
-    });
-
-    this.#logger.info({
-      action: 'SSE_OPEN_USE_FETCH',
-      info: {
-        traceId: this.#traceId!,
-        url: requestOptions.url,
-        method: requestOptions.method,
-        data: requestOptions.data
-          ? JSON.stringify(requestOptions.data)
-          : undefined,
-        headers: JSON.stringify(requestOptions.headers),
-        streaming: (requestOptions.streaming ?? true).toString(),
-      },
-      stats: {
-        connectingTimes: this.#connectingTimes,
-      },
-    });
-    // console.log(`-------SSE open ${this.#connectingTimes} times`);
-
-    this.#onOpen?.();
-
-    const { url, method, headers = {}, data } = requestOptions;
-    fetch(url!, {
-      method,
-      body: data ? JSON.stringify(data) : null,
-      headers: {
-        'content-type': 'application/json',
-        ...headers,
-        'x-trace-id': this.#traceId!,
-      },
-      signal: this.#ajaxController.signal,
-    })
-      .then(async (res) => {
-        if (res.ok) {
-          return res.json();
-        } else {
-          const responseData = await res.json();
-          if (responseData.error_code) {
-            throw new APIException(
-              responseData.error_message || `[No Response]`,
-              res.status,
-              res.url,
-              responseData,
-              responseData?.id || null,
-              responseData.error_code
-            );
-          } else {
-            throw new NetworkConnectionException(
-              `Failed to connect: ${res.url}`,
-              res.url,
-              `${res.statusText || 'UNKNOWN'}`
-            );
+    try {
+      await fetchEventSource(streamOptions.url, {
+        method: 'POST',
+        headers: {
+          ...streamOptions.headers,
+          'x-trace-id': this.#traceId!,
+        },
+        body: streamOptions.body,
+        signal: abortController.signal,
+        openWhenHidden: true,
+        onopen: async (response) => {
+          if (response.ok && response.headers.get('content-type')?.includes('text/event-stream')) {
+            this.#connectingTimes++;
+            this.#setStreamStatus(StreamStatusEnum.OPEN);
+            this.#setError(null);
+            this.#notifyOpen();
+            return;
           }
-        }
-      })
-      .then(async (data) => {
-        this.#updateState({
-          status: EventSourceStatusEnum.CLOSED,
-          streamMessage: data,
-          fullMessages: [data],
-          error: null,
-        });
-        this.#onMessage?.(data);
-      })
-      .catch((e) => {
-        // We expect abort errors when the user manually calls `close()` - ignore those
-        if (e.name === 'AbortError' || e.type === 'aborted') {
-          return;
-        }
 
-        this.#logger.exception(e, {
-          action: 'SSE_ERROR_USE_FETCH',
-          info: {
-            traceId: this.#traceId!,
-          },
-        });
+          const errorData = await parseErrorResponse(response);
+          throw createAPIExceptionFromResponse(response, response.url, errorData);
+        },
+        onmessage: (message) => {
+          if (!message.data) return;
 
-        this.#updateState({
-          streamMessage: null,
-          fullMessages: [],
-          status: EventSourceStatusEnum.ERROR,
-          error: {
-            errorCode: e.errorCode || e.statusCode,
-            errorMessage: e.message,
-          },
-        });
-        this.#onError?.(e);
-      })
-      .finally(() => {
-        this.#disconnectUseFetch();
+          const parsed = safeParse<unknown>(message.data);
+          if (!isSseEvent(parsed)) return;
+
+          this.#handleSseEvent(parsed);
+        },
+        onclose: () => {
+          this.#finishStream(true);
+        },
+        onerror: (error) => {
+          if (this.#isManualDisconnect) {
+            throw error;
+          }
+
+          this.#handleStreamError(normalizeRequestError(error, streamOptions.url, 'SSE stream failed'));
+          this.#finishStream(false);
+          throw error;
+        },
       });
+    } catch (error) {
+      if (this.#isManualDisconnect) return;
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+
+      this.#handleStreamError(normalizeRequestError(error, streamOptions.url, 'SSE stream failed'));
+      this.#finishStream(false);
+    }
   }
 
   disconnect() {
-    this.#disconnectUseEventSource();
-    this.#disconnectUseFetch();
-    this.#retryCount = 0;
-  }
-
-  #disconnectUseEventSource() {
-    if (this.#eventSource) {
-      this.#logger.info({
-        action: 'SSE_DISCONNECTING...',
-        info: {
-          traceId: this.#traceId!,
-        },
-      });
-
-      this.#eventSource.removeEventListener('open', this.#handleOpen);
-      this.#eventSource.removeEventListener('message', this.#handleMessage);
-      this.#eventSource.removeEventListener('error', this.#handleError);
-      this.#eventSource.close();
-      // close 之后 readyState 会变为 CLOSED
-      this.#eventSource = null;
-
-      this.#updateState({
-        status: EventSourceStatusEnum.CLOSED,
-      });
-
-      this.#logger.info({
-        action: 'SSE_DISCONNECTED',
-        info: {
-          traceId: this.#traceId!,
-        },
-      });
-      this.#onDisconnect?.();
-    }
-  }
-
-  #disconnectUseFetch() {
-    if (this.#ajaxController) {
-      this.#logger.info({
-        action: 'SSE_DISCONNECTING_USE_FETCH...',
-        info: {
-          traceId: this.#traceId!,
-        },
-      });
-
-      this.#ajaxController.abort();
-      this.#ajaxController = undefined;
-      this.#updateState({
-        status: EventSourceStatusEnum.CLOSED,
-      });
-
-      this.#logger.info({
-        action: 'SSE_DISCONNECTED_USE_FETCH',
-        info: {
-          traceId: this.#traceId!,
-        },
-      });
-      this.#onDisconnect?.();
-    }
+    this.#logger.info({
+      action: 'SSE_DISCONNECTING...',
+      info: {
+        traceId: this.#traceId!,
+      },
+    });
+    this.#closeStream();
   }
 
   destroy() {
     this.disconnect();
-    this.#updateState({
-      status: EventSourceStatusEnum.IDLE,
-      streamMessage: null,
-      fullMessages: [],
-      error: null,
-      // allMessages: [],
-    });
-    this.removeAllListeners();
+    this.#sessionStatus = null;
+    this.#setStreamStatus(StreamStatusEnum.IDLE);
+    this.#setError(null);
+    this.#subscribers.clear();
   }
 }

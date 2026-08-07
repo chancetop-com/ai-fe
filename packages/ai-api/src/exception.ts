@@ -1,9 +1,7 @@
-export abstract class Exception {
-  /**
-   * @param message is JavaScript original message, in English usually.
-   * In prod environment, you are not advised to display the error message directly to end-user.
-   */
-  protected constructor(public message: string) {}
+export abstract class Exception extends Error {
+  protected constructor(message: string) {
+    super(message);
+  }
 }
 
 export class APIException extends Exception {
@@ -11,11 +9,12 @@ export class APIException extends Exception {
     message: string,
     public statusCode: number,
     public requestURL: string,
-    public responseData: any,
+    public responseData: unknown,
     public errorId: string | null,
     public errorCode: string | null
   ) {
     super(message);
+    this.name = 'APIException';
   }
 }
 
@@ -26,14 +25,16 @@ export class NetworkConnectionException extends Exception {
     public originalErrorMessage: string = ''
   ) {
     super(message);
+    this.name = 'NetworkConnectionException';
   }
 }
 
 export class JavaScriptException extends Exception {
   constructor(
     message: string,
-    public originalError: any
+    public originalError: unknown
   ) {
     super(message);
+    this.name = 'JavaScriptException';
   }
 }

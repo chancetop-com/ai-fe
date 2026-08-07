@@ -1,19 +1,29 @@
-import { EventSource } from 'eventsource';
+import { SseEvent, SseEventType, SessionStatus } from './sse-events';
+import { SendMessageRequest } from './session-api-types';
 
-export interface BaseRequestOption {
-  baseUrl?: string;
+export interface AiLibOptions {
+  baseUrl: string;
+  apiKey?: string;
+  sessionId?: string;
+  streamPath?: string;
+  loggerUrl?: string;
+  acceptEventTypes?: SseEventType[];
 }
 
-export interface RequestOptions<T> {
-  url?: string;
+export interface AiLibSubscription {
+  onOpen?: () => void;
+  onMessage?: (event: SseEvent) => void;
+  onError?: (error: Error) => void;
+  onDisconnect?: () => void;
+}
+
+export interface SendMessageStreamOptions extends SendMessageRequest {
+  sessionId?: string;
+  apiKey?: string;
   headers?: Record<string, string>;
-  method?: 'GET' | 'POST' | 'PUT';
-  pathParams?: Record<string, string>;
-  data?: T;
-  streaming?: boolean;
 }
 
-export enum EventSourceStatusEnum {
+export enum StreamStatusEnum {
   IDLE = 'idle',
   CONNECTING = 'connecting',
   OPEN = 'open',
@@ -21,44 +31,10 @@ export enum EventSourceStatusEnum {
   ERROR = 'error',
 }
 
+/** @deprecated Use StreamStatusEnum */
+export { StreamStatusEnum as EventSourceStatusEnum };
+
 export type AiLibError = null | {
   errorCode: null | string | number;
   errorMessage: null | string;
 };
-
-export interface SSEListeners {
-  // onNotice?: (event: Event) => void;
-  // onUpdate?: (event: Event) => void;
-  onOpen: () => void;
-  onMessage: (data: any) => void;
-  onError: (event: Event) => void;
-  onDisconnect: () => void;
-  onStateUpdate: (state: AiLibState) => void;
-}
-
-export type AiLibOptions = BaseRequestOption &
-  Partial<SSEListeners> & {
-    loggerUrl?: string;
-    retryAttempts?: number; // default 3
-    acceptMsgTypes?: string[];
-  };
-
-export interface AiLibState {
-  status: EventSourceStatusEnum;
-  streamMessage: null | Record<string, any>;
-  fullMessages: Record<string, any>[];
-  error: AiLibError;
-  // allMessages: Record<string, any>[];
-}
-
-export interface EditorEvents {
-  update: {
-    eventsource: EventSource | null;
-    aiLibState: AiLibState;
-  };
-}
-
-export enum MsgTypeEnum {
-  End = 'end',
-  AgentResponse = 'agent_response',
-}

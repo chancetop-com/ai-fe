@@ -1,14 +1,30 @@
-config
-node_modules
-public
-scripts
-src
+# Source
+src/
+
+# Build / dev config
+tsconfig.json
+tsconfig.*.json
+eslint.config.js
+prettier.config.js
+*.config.js
+!dist/**
+
+# Tooling
+node_modules/
+coverage/
+.git/
+.github/
+.husky/
+.vscode/
+
+# Lockfiles
+package-lock.json
+pnpm-lock.yaml
+
+# Legacy
+config/
+public/
+scripts/
 .eslintignore
 .gitignore
-.npmignore
 .prettierignore
-package-lock.json
-package.json
-tsconfig.build.json
-tsconfig.json
-.git

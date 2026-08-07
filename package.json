@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
-    "lint": "turbo lint",
+    "build": "nx run-many -t build",
+    "dev": "nx run-many -t dev",
+    "lint": "nx run-many -t lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "changeset": "changeset",
     "packages-version": "changeset version",
@@ -15,8 +15,8 @@
     "@changesets/cli": "^2.29.1",
     "@connexup/eslint-config": "workspace:*",
     "@connexup/typescript-config": "workspace:*",
+    "nx": "23.1.1",
     "prettier": "^3.5.1",
-    "turbo": "^2.4.2",
     "typescript": "^5.9.3"
   },
   "packageManager": "pnpm@10.4.1",

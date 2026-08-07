@@ -15,8 +15,10 @@ node_modules
 # Testing
 coverage
 
-# Turbo
-.turbo
+# Nx
+.nx/cache
+.nx/workspace-data
+.nx/migrate-runs
 
 # Vercel
 .vercel
@@ -34,3 +36,10 @@ npm-debug.log*
 # Misc
 .DS_Store
 *.pem
+
+
+# core-fe
+packages/core-core
+packages/core-fe
+packages/core-fe-cli
+examples/core-fe-demo

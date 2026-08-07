@@ -1,5 +1,13 @@
 # @connexup/ai-api
 
+## 1.1.0
+
+### Minor Changes
+
+- feat(ai-api): REST clients, unified APIException handling, SSE stream via fetch-event-source, setApiKey
+- feat(ai-react): useAgentSession with setApiKey and per-request apiKey override
+- feat(ai-chat): AiChat UI, session sidebar, refreshApiKey retry on SSE unauthorized
+
 ## 1.0.6
 
 ### Patch Changes

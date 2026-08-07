@@ -1,5 +1,14 @@
 # core-fe-sse-demo
 
+## 1.0.8
+
+### Patch Changes
+
+- Updated dependencies
+  - @connexup/ai-api@1.1.0
+  - @connexup/ai-react@2.0.0
+  - @connexup/ai-chat@2.0.0
+
 ## 1.0.7
 
 ### Patch Changes

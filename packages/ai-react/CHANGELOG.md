@@ -1,5 +1,17 @@
 # @connexup/ai-react
 
+## 1.1.0
+
+### Minor Changes
+
+- feat(ai-api): REST clients, unified APIException handling, SSE stream via fetch-event-source, setApiKey
+- feat(ai-react): useAgentSession with setApiKey and per-request apiKey override
+
+### Patch Changes
+
+- Updated dependencies
+  - @connexup/ai-api@1.1.0
+
 ## 1.0.7
 
 ### Patch Changes

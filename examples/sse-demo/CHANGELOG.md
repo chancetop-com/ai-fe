@@ -5,7 +5,7 @@
 ### Patch Changes
 
 - Updated dependencies
-  - @connexup/ai-chat@1.1.1
+  - @connexup/ai-chat@1.1.2
 
 ## 1.0.8
 

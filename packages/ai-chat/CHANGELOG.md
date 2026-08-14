@@ -1,5 +1,11 @@
 # @connexup/ai-chat
 
+## 1.1.2
+
+### Patch Changes
+
+- Add scoped CSS reset under `.ai-chat` to isolate from host global styles, including `hr` and markdown element resets
+
 ## 1.1.1
 
 ### Patch Changes

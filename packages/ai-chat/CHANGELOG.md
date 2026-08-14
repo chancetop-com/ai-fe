@@ -1,5 +1,13 @@
 # @connexup/ai-chat
 
+## 1.1.1
+
+### Patch Changes
+
+- Separate streaming state (`turn_complete`) from session state (`status_change`)
+- Add `ErrorSegment` with styled error display at the end of stream messages
+- Improve `cancelTurn` to close stream only and sync session status via `getStatus`
+
 ## 1.1.0
 
 ### Minor Changes

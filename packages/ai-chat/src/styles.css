@@ -73,12 +73,20 @@
 
 .ai-chat :where(button) {
   appearance: none;
-  background: transparent;
-  border: none;
-  padding: 0;
   margin: 0;
   text-align: inherit;
   cursor: pointer;
+}
+
+.ai-chat .ai-chat-btn-icon,
+.ai-chat .ai-chat-icon-btn {
+  border: none;
+  background: transparent;
+}
+
+.ai-chat .ai-chat-btn-icon:hover:not(:disabled),
+.ai-chat .ai-chat-icon-btn:hover:not(:disabled) {
+  background: var(--color-bg-tertiary);
 }
 
 .ai-chat :where(input, textarea, select) {
@@ -177,10 +185,16 @@
   color: var(--color-text-secondary);
   font-size: 0.75rem;
   cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .ai-chat-btn:hover:not(:disabled) {
-  opacity: 0.85;
+  background: var(--color-bg-tertiary);
+  border-color: color-mix(in srgb, var(--color-border) 70%, var(--color-text-muted));
 }
 
 .ai-chat-btn:disabled {
@@ -194,10 +208,20 @@
   color: #fff;
 }
 
+.ai-chat-btn--primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary) 88%, #000);
+  border-color: color-mix(in srgb, var(--color-primary) 88%, #000);
+}
+
 .ai-chat-btn--danger {
   background: var(--color-error);
   border-color: var(--color-error);
   color: #fff;
+}
+
+.ai-chat-btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-error) 88%, #000);
+  border-color: color-mix(in srgb, var(--color-error) 88%, #000);
 }
 
 .ai-chat-btn-icon {
@@ -206,10 +230,19 @@
   justify-content: center;
   padding: 0.75rem;
   border-radius: 0.75rem;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-tertiary);
+  border: none;
+  background: transparent;
   color: var(--color-text-secondary);
   cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.ai-chat-btn-icon:hover:not(:disabled) {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text);
 }
 
 .ai-chat-btn-icon:disabled {
@@ -219,14 +252,167 @@
 
 .ai-chat-btn-icon--primary {
   background: var(--color-primary);
-  border-color: var(--color-primary);
+  border: none;
+  color: #fff;
+}
+
+.ai-chat-btn-icon--primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary) 88%, #000);
   color: #fff;
 }
 
 .ai-chat-btn-icon--danger {
   background: var(--color-error);
-  border-color: var(--color-error);
+  border: none;
   color: #fff;
+}
+
+.ai-chat-btn-icon--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-error) 88%, #000);
+  color: #fff;
+}
+
+.ai-chat .ai-chat-btn-icon--primary,
+.ai-chat .ai-chat-btn-icon--primary:hover:not(:disabled) {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.ai-chat .ai-chat-btn-icon--primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary) 88%, #000);
+}
+
+.ai-chat .ai-chat-btn-icon--danger,
+.ai-chat .ai-chat-btn-icon--danger:hover:not(:disabled) {
+  background: var(--color-error);
+  color: #fff;
+}
+
+.ai-chat .ai-chat-btn-icon--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-error) 88%, #000);
+}
+
+.ai-chat-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.ai-chat-icon-btn:hover:not(:disabled) {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text);
+}
+
+.ai-chat-icon-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.ai-chat-icon-btn--sm {
+  padding: 0.125rem;
+  border-radius: 0.25rem;
+}
+
+.ai-chat-ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.375rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: inherit;
+  line-height: inherit;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.ai-chat-ghost-btn:hover:not(:disabled) {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text);
+}
+
+.ai-chat-ghost-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.ai-chat .ai-chat-ghost-btn {
+  border: none;
+  background: transparent;
+}
+
+.ai-chat .ai-chat-ghost-btn:hover:not(:disabled) {
+  background: var(--color-bg-tertiary);
+}
+
+.ai-chat-ghost-btn--active {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+}
+
+.ai-chat-ghost-btn--active:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  color: var(--color-primary);
+}
+
+.ai-chat .ai-chat-ghost-btn--active {
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+}
+
+.ai-chat .ai-chat-ghost-btn--active:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  color: var(--color-primary);
+}
+
+.ai-chat button.ai-chat-artifact-card {
+  display: flex;
+  width: fit-content;
+  max-width: 28rem;
+  align-items: center;
+  gap: 0.75rem;
+  margin-block: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.ai-chat button.ai-chat-artifact-card:hover {
+  background: var(--color-bg-tertiary);
+  border-color: color-mix(in srgb, var(--color-border) 70%, var(--color-text-muted));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.ai-chat button.ai-chat-artifact-card--file {
+  border-color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 12%, var(--color-bg));
+}
+
+.ai-chat button.ai-chat-artifact-card--file:hover {
+  background: color-mix(in srgb, var(--color-success) 20%, var(--color-bg));
+  border-color: var(--color-success);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-success) 18%, transparent);
 }
 
 .ai-chat-messages {
@@ -415,6 +601,16 @@
   color: var(--color-text);
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.ai-chat-jump-btn:hover {
+  background: var(--color-bg-tertiary);
+  border-color: color-mix(in srgb, var(--color-border) 70%, var(--color-text-muted));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .ai-chat-stream-cursor {
@@ -436,4 +632,71 @@
   50% {
     opacity: 0.5;
   }
+}
+
+.ai-chat-artifact-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+}
+
+.ai-chat-artifact-drawer {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  background: var(--color-bg);
+}
+
+.ai-chat-artifact-drawer--panel {
+  flex-shrink: 0;
+  border-left: 1px solid var(--color-border);
+}
+
+.ai-chat-artifact-drawer--maximized {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+.ai-chat-artifact-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.ai-chat-artifact-preview-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.ai-chat-artifact-preview-frame {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-chat-artifact-preview-iframe {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  background: var(--color-bg);
 }

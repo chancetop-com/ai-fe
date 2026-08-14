@@ -44,11 +44,9 @@ function CopyIconButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded cursor-pointer transition-opacity opacity-70 hover:opacity-100"
+      className="ai-chat-ghost-btn"
       style={{
-        color: copied ? 'var(--color-success)' : 'var(--color-text-secondary)',
-        background: 'var(--color-bg-tertiary)',
-        border: '1px solid var(--color-border)',
+        color: copied ? 'var(--color-success)' : undefined,
         fontSize: '10px',
       }}
       title={copied ? 'Copied' : 'Copy detail'}
@@ -200,8 +198,7 @@ export function ToolsBlock({ tools }: { tools: ToolEvent[] }) {
               <button
                 type="button"
                 onClick={() => toggleResult(key)}
-                className="ml-auto flex items-center gap-0.5 cursor-pointer opacity-60 hover:opacity-100 shrink-0"
-                style={{ color: 'var(--color-text-secondary)', background: 'none', border: 'none' }}
+                className="ai-chat-ghost-btn ml-auto shrink-0"
               >
                 {expandedResults.has(key) ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
                 <span>detail</span>
@@ -210,12 +207,7 @@ export function ToolsBlock({ tools }: { tools: ToolEvent[] }) {
           </>
         ) : null}
         {tool.type === 'start' && tool.output ? (
-          <button
-            type="button"
-            onClick={() => toggleResult(key)}
-            className="ml-auto flex items-center gap-0.5 cursor-pointer opacity-60 hover:opacity-100 shrink-0"
-            style={{ color: 'var(--color-text-secondary)', background: 'none', border: 'none' }}
-          >
+          <button type="button" onClick={() => toggleResult(key)} className="ai-chat-ghost-btn ml-auto shrink-0">
             {expandedResults.has(key) ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
             <span>output</span>
           </button>
@@ -324,8 +316,7 @@ export function ToolsBlock({ tools }: { tools: ToolEvent[] }) {
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
-        className="flex items-center gap-1.5 w-full px-3 py-2 cursor-pointer"
-        style={{ color: 'var(--color-text-secondary)', background: 'none', border: 'none' }}
+        className="ai-chat-ghost-btn flex items-center gap-1.5 w-full justify-start px-3 py-2 rounded-none"
       >
         {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         <Wrench size={14} />

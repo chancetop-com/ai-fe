@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { FileApi } from '@connexup/ai-api';
 import {
@@ -267,13 +267,20 @@ export function ArtifactDrawer({ artifact, fileApi, onClose, hideShare = false }
     }
   };
 
+  useEffect(() => {
+    if (!maximized) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [maximized]);
+
   const drawerContent = (
     <div
-      className="flex flex-col h-full shrink-0 border-l relative"
+      className={`ai-chat-artifact-drawer ${maximized ? 'ai-chat-artifact-drawer--maximized' : 'ai-chat-artifact-drawer--panel relative'}`}
       style={{
         width: maximized ? '100%' : width,
-        borderColor: 'var(--color-border)',
-        background: 'var(--color-bg)',
       }}
     >
       {!maximized ? (
@@ -322,8 +329,7 @@ export function ArtifactDrawer({ artifact, fileApi, onClose, hideShare = false }
             <button
               type="button"
               onClick={copyContent}
-              className="p-1.5 rounded-lg cursor-pointer"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="ai-chat-icon-btn"
               title={copied ? 'Copied' : 'Copy content'}
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
@@ -333,8 +339,7 @@ export function ArtifactDrawer({ artifact, fileApi, onClose, hideShare = false }
             <button
               type="button"
               onClick={() => void handleDownload()}
-              className="p-1.5 rounded-lg cursor-pointer"
-              style={{ color: 'var(--color-text-secondary)' }}
+              className="ai-chat-icon-btn"
               title="Download"
             >
               <Download size={14} />
@@ -346,14 +351,14 @@ export function ArtifactDrawer({ artifact, fileApi, onClose, hideShare = false }
                 type="button"
                 onClick={() => void handleShare()}
                 disabled={shareStatus === 'loading'}
-                className="p-1.5 rounded-lg cursor-pointer disabled:opacity-70"
+                className="ai-chat-icon-btn"
                 style={{
                   color:
                     shareStatus === 'error'
                       ? 'var(--color-error)'
                       : shareStatus === 'copied'
                         ? 'var(--color-success)'
-                        : 'var(--color-text-secondary)',
+                        : undefined,
                 }}
                 title="Share"
               >
@@ -382,19 +387,12 @@ export function ArtifactDrawer({ artifact, fileApi, onClose, hideShare = false }
           <button
             type="button"
             onClick={() => setMaximized((value) => !value)}
-            className="p-1.5 rounded-lg cursor-pointer"
-            style={{ color: 'var(--color-text-secondary)' }}
+            className="ai-chat-icon-btn"
             title={maximized ? 'Restore' : 'Maximize'}
           >
             {maximized ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-lg cursor-pointer"
-            style={{ color: 'var(--color-text-secondary)' }}
-            title="Close"
-          >
+          <button type="button" onClick={onClose} className="ai-chat-icon-btn" title="Close">
             <X size={14} />
           </button>
         </div>
@@ -411,29 +409,21 @@ export function ArtifactDrawer({ artifact, fileApi, onClose, hideShare = false }
           <button
             type="button"
             onClick={() => setMode('preview')}
-            className="px-3 py-1 text-xs rounded-md cursor-pointer"
-            style={{
-              background: mode === 'preview' ? 'var(--color-primary)' + '20' : 'transparent',
-              color: mode === 'preview' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-            }}
+            className={`ai-chat-ghost-btn text-xs ${mode === 'preview' ? 'ai-chat-ghost-btn--active' : ''}`}
           >
             Preview
           </button>
           <button
             type="button"
             onClick={() => setMode('source')}
-            className="px-3 py-1 text-xs rounded-md cursor-pointer"
-            style={{
-              background: mode === 'source' ? 'var(--color-primary)' + '20' : 'transparent',
-              color: mode === 'source' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-            }}
+            className={`ai-chat-ghost-btn text-xs ${mode === 'source' ? 'ai-chat-ghost-btn--active' : ''}`}
           >
             Source
           </button>
         </div>
       ) : null}
 
-      <div className="flex-1 min-h-0 overflow-auto" style={{ background: 'var(--color-bg)' }}>
+      <div className="ai-chat-artifact-body">
         {mode === 'preview'
           ? renderPreview(artifact, {
               fileBlobUrl,
@@ -447,10 +437,38 @@ export function ArtifactDrawer({ artifact, fileApi, onClose, hideShare = false }
   );
 
   if (maximized) {
-    return createPortal(<div className="fixed inset-0 z-50">{drawerContent}</div>, document.body);
+    return createPortal(<div className="ai-chat ai-chat-artifact-overlay">{drawerContent}</div>, document.body);
   }
 
   return drawerContent;
+}
+
+function PreviewScroll({ children }: { children: ReactNode }) {
+  return <div className="ai-chat-artifact-preview-scroll">{children}</div>;
+}
+
+function PreviewIframe({
+  title,
+  src,
+  srcDoc,
+  sandbox,
+}: {
+  title: string;
+  src?: string;
+  srcDoc?: string;
+  sandbox?: string;
+}) {
+  return (
+    <div className="ai-chat-artifact-preview-frame">
+      <iframe
+        title={title}
+        src={src}
+        srcDoc={srcDoc}
+        sandbox={sandbox}
+        className="ai-chat-artifact-preview-iframe"
+      />
+    </div>
+  );
 }
 
 function renderPreview(
@@ -464,34 +482,40 @@ function renderPreview(
 ) {
   if (isJsonCodeArtifact(spec) && spec.content) {
     return (
-      <pre
-        className="p-6 text-xs font-mono whitespace-pre-wrap"
-        style={{ color: 'var(--color-text-secondary)', margin: 0 }}
-      >
-        {formatJsonText(spec.content)}
-      </pre>
+      <PreviewScroll>
+        <pre
+          className="p-6 text-xs font-mono whitespace-pre-wrap"
+          style={{ color: 'var(--color-text-secondary)', margin: 0 }}
+        >
+          {formatJsonText(spec.content)}
+        </pre>
+      </PreviewScroll>
     );
   }
   if (spec.kind === 'html' && spec.content) {
-    return (
-      <iframe sandbox="allow-scripts" srcDoc={spec.content} title={spec.title} className="w-full h-full border-0" />
-    );
+    return <PreviewIframe title={spec.title} srcDoc={spec.content} sandbox="allow-scripts" />;
   }
   if (spec.kind === 'svg' && spec.content) {
-    return <div className="p-6 flex items-center justify-center" dangerouslySetInnerHTML={{ __html: spec.content }} />;
+    return (
+      <PreviewScroll>
+        <div className="p-6 flex items-center justify-center" dangerouslySetInnerHTML={{ __html: spec.content }} />
+      </PreviewScroll>
+    );
   }
   if (spec.kind === 'markdown' && spec.content) {
     return (
-      <div className="px-6 py-4 text-sm ai-chat-markdown">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{spec.content}</ReactMarkdown>
-      </div>
+      <PreviewScroll>
+        <div className="px-6 py-4 text-sm ai-chat-markdown">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{spec.content}</ReactMarkdown>
+        </div>
+      </PreviewScroll>
     );
   }
   if (spec.kind === 'file' && (spec.fileId || spec.contentUrl)) {
     if (state.fileLoading) {
       return (
         <div
-          className="p-6 flex items-center justify-center gap-2 text-sm"
+          className="p-6 flex flex-1 items-center justify-center gap-2 text-sm"
           style={{ color: 'var(--color-text-muted)' }}
         >
           <Loader2 size={16} className="animate-spin" /> Loading file...
@@ -500,16 +524,20 @@ function renderPreview(
     }
     if (state.fileError) {
       return (
-        <div className="p-6 text-sm" style={{ color: 'var(--color-error)' }}>
-          Failed to load file: {state.fileError}
-        </div>
+        <PreviewScroll>
+          <div className="p-6 text-sm" style={{ color: 'var(--color-error)' }}>
+            Failed to load file: {state.fileError}
+          </div>
+        </PreviewScroll>
       );
     }
     if (!state.fileBlobUrl) {
       return (
-        <div className="p-6 text-sm" style={{ color: 'var(--color-text-muted)' }}>
-          No preview available.
-        </div>
+        <PreviewScroll>
+          <div className="p-6 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+            No preview available.
+          </div>
+        </PreviewScroll>
       );
     }
 
@@ -523,53 +551,63 @@ function renderPreview(
 
     if (isJson && state.fileText != null) {
       return (
-        <pre
-          className="p-6 text-xs font-mono whitespace-pre-wrap"
-          style={{ color: 'var(--color-text-secondary)', margin: 0 }}
-        >
-          {formatJsonText(state.fileText)}
-        </pre>
+        <PreviewScroll>
+          <pre
+            className="p-6 text-xs font-mono whitespace-pre-wrap"
+            style={{ color: 'var(--color-text-secondary)', margin: 0 }}
+          >
+            {formatJsonText(state.fileText)}
+          </pre>
+        </PreviewScroll>
       );
     }
     if (isImage) {
       return (
-        <div className="p-6 flex items-center justify-center">
-          <img src={state.fileBlobUrl} alt={spec.title} className="max-w-full max-h-full" />
-        </div>
+        <PreviewScroll>
+          <div className="p-6 flex min-h-full items-center justify-center">
+            <img src={state.fileBlobUrl} alt={spec.title} className="max-w-full max-h-full object-contain" />
+          </div>
+        </PreviewScroll>
       );
     }
     if (isVideo) {
       return (
-        <div className="p-6 flex items-center justify-center">
-          <video controls src={state.fileBlobUrl} className="max-w-full max-h-full" />
-        </div>
+        <PreviewScroll>
+          <div className="p-6 flex min-h-full items-center justify-center">
+            <video controls src={state.fileBlobUrl} className="max-w-full max-h-full" />
+          </div>
+        </PreviewScroll>
       );
     }
     if (isHtml) {
-      return (
-        <iframe sandbox="allow-scripts" src={state.fileBlobUrl} title={spec.title} className="w-full h-full border-0" />
-      );
+      return <PreviewIframe title={spec.title} src={state.fileBlobUrl} sandbox="allow-scripts" />;
     }
     if (isMarkdown && state.fileText != null) {
       return (
-        <div className="px-6 py-4 text-sm ai-chat-markdown">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{state.fileText}</ReactMarkdown>
-        </div>
+        <PreviewScroll>
+          <div className="px-6 py-4 text-sm ai-chat-markdown">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{state.fileText}</ReactMarkdown>
+          </div>
+        </PreviewScroll>
       );
     }
     if (isPdf) {
-      return <iframe src={state.fileBlobUrl} title={spec.title} className="w-full h-full border-0" />;
+      return <PreviewIframe title={spec.title} src={state.fileBlobUrl} />;
     }
     return (
-      <div className="p-6 text-sm" style={{ color: 'var(--color-text-muted)' }}>
-        Preview not available for this file type. Use the download button.
-      </div>
+      <PreviewScroll>
+        <div className="p-6 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+          Preview not available for this file type. Use the download button.
+        </div>
+      </PreviewScroll>
     );
   }
   return (
-    <div className="p-6 text-sm" style={{ color: 'var(--color-text-muted)' }}>
-      No preview available.
-    </div>
+    <PreviewScroll>
+      <div className="p-6 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+        No preview available.
+      </div>
+    </PreviewScroll>
   );
 }
 
@@ -585,7 +623,7 @@ function renderSource(
     if (state.fileLoading) {
       return (
         <div
-          className="p-6 flex items-center justify-center gap-2 text-sm"
+          className="p-6 flex flex-1 items-center justify-center gap-2 text-sm"
           style={{ color: 'var(--color-text-muted)' }}
         >
           <Loader2 size={16} className="animate-spin" /> Loading source...
@@ -594,40 +632,50 @@ function renderSource(
     }
     if (state.fileError) {
       return (
-        <div className="p-6 text-sm" style={{ color: 'var(--color-error)' }}>
-          Failed to load source: {state.fileError}
-        </div>
+        <PreviewScroll>
+          <div className="p-6 text-sm" style={{ color: 'var(--color-error)' }}>
+            Failed to load source: {state.fileError}
+          </div>
+        </PreviewScroll>
       );
     }
     if (state.fileText == null) {
       return (
-        <div className="p-6 text-sm" style={{ color: 'var(--color-text-muted)' }}>
-          Source not available for this file type.
-        </div>
+        <PreviewScroll>
+          <div className="p-6 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+            Source not available for this file type.
+          </div>
+        </PreviewScroll>
       );
     }
     return (
-      <pre
-        className="p-6 text-xs font-mono whitespace-pre-wrap"
-        style={{ color: 'var(--color-text-secondary)', margin: 0 }}
-      >
-        {state.fileText}
-      </pre>
+      <PreviewScroll>
+        <pre
+          className="p-6 text-xs font-mono whitespace-pre-wrap"
+          style={{ color: 'var(--color-text-secondary)', margin: 0 }}
+        >
+          {state.fileText}
+        </pre>
+      </PreviewScroll>
     );
   }
   if (spec.content == null) {
     return (
-      <div className="p-6 text-sm" style={{ color: 'var(--color-text-muted)' }}>
-        No source available.
-      </div>
+      <PreviewScroll>
+        <div className="p-6 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+          No source available.
+        </div>
+      </PreviewScroll>
     );
   }
   return (
-    <pre
-      className="p-6 text-xs font-mono whitespace-pre-wrap"
-      style={{ color: 'var(--color-text-secondary)', margin: 0 }}
-    >
-      {spec.content}
-    </pre>
+    <PreviewScroll>
+      <pre
+        className="p-6 text-xs font-mono whitespace-pre-wrap"
+        style={{ color: 'var(--color-text-secondary)', margin: 0 }}
+      >
+        {spec.content}
+      </pre>
+    </PreviewScroll>
   );
 }

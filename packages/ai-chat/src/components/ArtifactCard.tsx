@@ -18,23 +18,13 @@ function iconFor(spec: ArtifactSpec) {
 
 export function ArtifactCard({ artifact, onOpen }: ArtifactCardProps) {
   const isFile = artifact.kind === 'file';
-  const accent = isFile ? 'var(--color-success)' : 'var(--color-border)';
-  const tintBg = isFile ? 'var(--color-success)' + '12' : 'var(--color-bg-secondary)';
-  const tintHoverBg = isFile ? 'var(--color-success)' + '22' : 'var(--color-bg-tertiary)';
   const iconBg = isFile ? 'var(--color-success)' + '20' : 'var(--color-bg-tertiary)';
 
   return (
     <button
       type="button"
       onClick={() => onOpen(artifact)}
-      className="group flex w-fit max-w-md items-center gap-3 rounded-xl border px-3 py-2 my-1.5 text-left cursor-pointer transition-colors"
-      style={{ borderColor: accent, background: tintBg }}
-      onMouseEnter={(event) => {
-        event.currentTarget.style.background = tintHoverBg;
-      }}
-      onMouseLeave={(event) => {
-        event.currentTarget.style.background = tintBg;
-      }}
+      className={`ai-chat-artifact-card group ${isFile ? 'ai-chat-artifact-card--file' : ''}`}
     >
       <div
         className="flex items-center justify-center rounded-lg shrink-0"

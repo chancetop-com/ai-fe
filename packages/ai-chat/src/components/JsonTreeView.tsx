@@ -62,8 +62,8 @@ function CopyButton({ text, label }: { text: string; label?: string }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded cursor-pointer opacity-0 group-hover:opacity-70 hover:!opacity-100 transition-opacity"
-      style={{ color: copied ? 'var(--color-success)' : 'var(--color-text-secondary)', fontSize: '10px' }}
+      className="ai-chat-icon-btn ai-chat-icon-btn--sm opacity-0 group-hover:opacity-100"
+      style={{ color: copied ? 'var(--color-success)' : undefined }}
       title={copied ? 'Copied' : label || 'Copy'}
     >
       {copied ? <Check size={10} /> : <Copy size={10} />}
@@ -116,23 +116,35 @@ function JsonNode({ k, value, depth, defaultExpandDepth, maxChildren, isLast }: 
 
   return (
     <div className="group leading-6" style={indent}>
-      <div
-        className="flex items-center gap-1 cursor-pointer select-none"
-        onClick={() => setExpanded((value) => !value)}
-      >
-        <span
-          className="inline-flex items-center justify-center shrink-0"
-          style={{ width: 14, color: 'var(--color-text-muted)' }}
+      <div className="flex items-center gap-1 select-none">
+        <button
+          type="button"
+          className="ai-chat-icon-btn ai-chat-icon-btn--sm shrink-0"
+          onClick={() => setExpanded((value) => !value)}
+          aria-expanded={expanded}
+          aria-label={expanded ? 'Collapse' : 'Expand'}
         >
           {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-        </span>
+        </button>
         {keyLabel !== null ? (
           <>
-            <span style={{ color: 'var(--color-text)' }}>{keyLabel}</span>
+            <span
+              className="cursor-pointer"
+              style={{ color: 'var(--color-text)' }}
+              onClick={() => setExpanded((value) => !value)}
+            >
+              {keyLabel}
+            </span>
             <span style={{ color: 'var(--color-text-muted)' }}>:</span>
           </>
         ) : null}
-        <span style={{ color: 'var(--color-text-muted)' }}>{openBracket}</span>
+        <span
+          className="cursor-pointer"
+          style={{ color: 'var(--color-text-muted)' }}
+          onClick={() => setExpanded((value) => !value)}
+        >
+          {openBracket}
+        </span>
         {!expanded ? (
           <>
             <span style={{ color: 'var(--color-text-muted)', fontStyle: 'italic' }}>{countSummary(value)}</span>
@@ -253,11 +265,9 @@ function CopyAllButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded cursor-pointer transition-colors"
+      className="ai-chat-ghost-btn"
       style={{
-        color: copied ? 'var(--color-success)' : 'var(--color-text-secondary)',
-        background: 'var(--color-bg-tertiary)',
-        border: '1px solid var(--color-border)',
+        color: copied ? 'var(--color-success)' : undefined,
         fontSize: '10px',
       }}
     >

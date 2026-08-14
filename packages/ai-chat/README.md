@@ -30,7 +30,7 @@ export function App() {
 }
 ```
 
-**Styles:** Import `@connexup/ai-chat/styles.css` once. Tailwind utilities are pre-compiled and scoped under `.ai-chat`, so they won't conflict with your app's Tailwind (if you use one).
+**Styles:** Import `@connexup/ai-chat/styles.css` once. Tailwind utilities are pre-compiled and scoped under `.ai-chat`, with a built-in scoped reset for common HTML elements (`button`, `input`, `hr`, markdown tags, etc.) so host global styles are less likely to leak in.
 
 If your app also uses Tailwind, pick **one** approach:
 

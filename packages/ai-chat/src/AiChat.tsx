@@ -200,13 +200,14 @@ export function AiChat({
   //   [agentApi]
   // );
 
-  const isTurnInProgress =
-    chatState.sessionStatus === 'running' || chatState.streamStatus === StreamStatusEnum.CONNECTING;
+  const isLiveStreaming =
+    chatState.streamStatus === StreamStatusEnum.OPEN || chatState.streamStatus === StreamStatusEnum.CONNECTING;
 
-  const hasOpenStream =
-    chatState.streamStatus === StreamStatusEnum.OPEN ||
-    chatState.streamStatus === StreamStatusEnum.CONNECTING ||
-    chatState.sessionStatus === 'running';
+  const isSessionRunning = chatState.sessionStatus === 'running';
+
+  const hasOpenStream = isLiveStreaming;
+
+  const canCancelTurn = isLiveStreaming || isSessionRunning;
 
   const isThinking = chatState.isThinking;
 
@@ -269,7 +270,6 @@ export function AiChat({
     setActionLoading(true);
     try {
       await cancelTurn();
-      disconnect();
       message.success('Turn cancelled');
     } catch (error) {
       message.error(formatApiError(error, 'Failed to cancel turn'));
@@ -340,7 +340,7 @@ export function AiChat({
       <div className="ai-chat-main flex flex-col min-w-0 min-h-0">
         {showAgentSelector ? (
           <AgentSelector
-            disabled={isTurnInProgress}
+            disabled={isLiveStreaming || isSessionRunning}
             agents={allAgents}
             selectedAgentId={selectedAgentId}
             selectedAgent={selectedAgent}
@@ -380,7 +380,7 @@ export function AiChat({
                 <button
                   type="button"
                   className="ai-chat-btn"
-                  disabled={!sessionId || actionLoading}
+                  disabled={!sessionId || actionLoading || !canCancelTurn}
                   onClick={() => void handleCancelTurn()}
                 >
                   Cancel
@@ -400,7 +400,7 @@ export function AiChat({
 
         <ChatMessagesPanel
           messages={chatState.messages}
-          isStreaming={isTurnInProgress}
+          isStreaming={isLiveStreaming}
           isThinking={isThinking}
           planTodos={chatState.planTodos}
           title={selectedAgent?.name || title}
@@ -414,7 +414,7 @@ export function AiChat({
         <ChatComposer
           ref={composerRef}
           disabled={chatState.streamStatus === StreamStatusEnum.ERROR || actionLoading || !selectedAgentId || !baseUrl}
-          isStreaming={isTurnInProgress}
+          isStreaming={isLiveStreaming}
           placeholder={selectedAgentId ? placeholder : 'Select an agent first'}
           messagesContainerRef={messagesContainerRef}
           blobApi={blobApi}

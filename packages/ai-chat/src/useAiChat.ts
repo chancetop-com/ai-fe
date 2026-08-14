@@ -225,10 +225,14 @@ export function useAiChat(options: UseAiChatOptions) {
       allowInitialSessionIdRef.current = false;
 
       if (loadHistoryOnConnect) {
-        const history = await sessionApi.getHistory(resolvedSessionId);
+        const [history, status] = await Promise.all([
+          sessionApi.getHistory(resolvedSessionId),
+          sessionApi.getStatus(resolvedSessionId).catch(() => null),
+        ]);
         setChatState((prev) => ({
           ...prev,
           messages: historyToChatMessages(history.messages),
+          sessionStatus: status?.status ?? null,
         }));
         setSessionArtifacts(history.artifacts ?? []);
       }
@@ -458,6 +462,7 @@ export function useAiChat(options: UseAiChatOptions) {
     setChatState((prev) => ({
       ...prev,
       messages: [...prev.messages, createUserMessage(trimmed, attachments), createAgentPlaceholder()],
+      streamStatus: StreamStatusEnum.CONNECTING,
       isThinking: false,
     }));
   }, []);
@@ -580,6 +585,60 @@ export function useAiChat(options: UseAiChatOptions) {
     [agentSession]
   );
 
+  const resolveActiveSessionId = useCallback(() => {
+    return sessionId ?? (allowInitialSessionIdRef.current ? initialSessionId : undefined);
+  }, [initialSessionId, sessionId]);
+
+  const applyStreamClosedState = useCallback(() => {
+    setChatState((prev) => applyStreamState(prev, StreamStatusEnum.CLOSED));
+  }, []);
+
+  const syncSessionStatus = useCallback(async () => {
+    const resolvedSessionId = resolveActiveSessionId();
+    if (!resolvedSessionId) return;
+
+    try {
+      const status = await sessionApi.getStatus(resolvedSessionId);
+      setChatState((prev) => ({ ...prev, sessionStatus: status.status }));
+    } catch (error) {
+      console.warn('failed to sync session status', error);
+    }
+  }, [resolveActiveSessionId, sessionApi]);
+
+  const cancelTurn = useCallback(async () => {
+    await agentSession.cancelTurn();
+    applyStreamClosedState();
+    await syncSessionStatus();
+  }, [agentSession, applyStreamClosedState, syncSessionStatus]);
+
+  const closeSession = useCallback(async () => {
+    const resolvedSessionId = resolveActiveSessionId();
+    if (!resolvedSessionId) {
+      throw new Error('sessionId is required to close session');
+    }
+
+    if (chatState.sessionStatus === 'running') {
+      try {
+        await agentSession.cancelTurn();
+      } catch (error) {
+        console.warn('failed to cancel turn before closing session', error);
+      }
+      aiLib.disconnect();
+      applyStreamClosedState();
+    }
+
+    await agentSession.closeSession();
+    resetChatState();
+    setDraftSession(null);
+  }, [
+    agentSession,
+    aiLib,
+    applyStreamClosedState,
+    chatState.sessionStatus,
+    resetChatState,
+    resolveActiveSessionId,
+  ]);
+
   const messageMap = useMemo(() => {
     return new Map(chatState.messages.map((message) => [message.key, message]));
   }, [chatState.messages]);
@@ -632,8 +691,8 @@ export function useAiChat(options: UseAiChatOptions) {
     sendUserMessage,
     sendMessage,
     approveToolCall,
-    cancelTurn: agentSession.cancelTurn,
-    closeSession: agentSession.closeSession,
+    cancelTurn,
+    closeSession,
     createSession,
     getHistory: agentSession.getHistory,
     getStatus: agentSession.getStatus,

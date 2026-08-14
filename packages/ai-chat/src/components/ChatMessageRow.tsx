@@ -10,6 +10,7 @@ import { getMessageText } from '../chat-state';
 import { ArtifactCard } from './ArtifactCard';
 import type { ArtifactSpec } from './artifactTypes';
 import { CopyButton } from './CopyButton';
+import { ErrorBlock } from './ErrorBlock';
 import { PlanUpdateBlock } from './PlanUpdateBlock';
 import { SandboxBlock } from './SandboxBlock';
 import { ThinkingBlock } from './ThinkingBlock';
@@ -32,7 +33,9 @@ function hasAnySegments(message: ChatMessage): boolean {
 }
 
 function hasTextSegments(message: ChatMessage): boolean {
-  return message.segments.some((segment) => segment.type === 'text' && segment.content.trim());
+  return message.segments.some(
+    (segment) => (segment.type === 'text' && segment.content.trim()) || segment.type === 'error'
+  );
 }
 
 export const ChatMessageRow = memo(function ChatMessageRow({
@@ -92,7 +95,9 @@ export const ChatMessageRow = memo(function ChatMessageRow({
   const toolsSeg = message.segments.find((segment) => segment.type === 'tools');
   const sandboxSeg = message.segments.find((segment) => segment.type === 'sandbox');
   const textSeg = message.segments.find((segment) => segment.type === 'text');
+  const errorSegs = message.segments.filter((segment) => segment.type === 'error');
   const hasRenderableText = Boolean(textSeg?.content.trim());
+  const hasRenderableErrors = errorSegs.length > 0;
 
   return (
     <div className={`flex gap-3 ${isUser ? 'justify-end' : ''}`}>
@@ -119,7 +124,7 @@ export const ChatMessageRow = memo(function ChatMessageRow({
 
         {thinkingSeg ? (
           <div className="mb-3">
-            <ThinkingBlock thinking={thinkingSeg.content} isStreaming={isStreaming && isThinking} />
+            <ThinkingBlock thinking={thinkingSeg.content} isStreaming={isStreaming} />
           </div>
         ) : null}
 
@@ -135,7 +140,7 @@ export const ChatMessageRow = memo(function ChatMessageRow({
           </div>
         ) : null}
 
-        {(hasAttachments || hasRenderableText) && (
+        {(hasAttachments || hasRenderableText || hasRenderableErrors) && (
           <div className="mb-3">
             {hasAttachments ? (
               <div
@@ -185,7 +190,7 @@ export const ChatMessageRow = memo(function ChatMessageRow({
 
             {hasRenderableText && textSeg ? (
               <div
-                className="rounded-xl px-4 py-3 text-sm overflow-x-auto"
+                className={`rounded-xl px-4 py-3 text-sm overflow-x-auto${hasRenderableErrors ? ' mb-2' : ''}`}
                 style={{
                   background: isUser ? 'var(--color-primary)' : 'var(--color-bg-secondary)',
                   color: isUser ? 'white' : 'var(--color-text)',
@@ -204,6 +209,18 @@ export const ChatMessageRow = memo(function ChatMessageRow({
                 {isStreaming && textSeg.content ? <span className="ai-chat-stream-cursor" /> : null}
               </div>
             ) : null}
+
+            {hasRenderableErrors
+              ? errorSegs.map((errorSeg, index) => (
+                  <div key={`error-${index}`} className={index < errorSegs.length - 1 ? 'mb-2' : ''}>
+                    <ErrorBlock
+                      message={errorSeg.message}
+                      detail={errorSeg.detail}
+                      errorCode={errorSeg.errorCode}
+                    />
+                  </div>
+                ))
+              : null}
           </div>
         )}
 

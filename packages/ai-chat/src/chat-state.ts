@@ -41,7 +41,14 @@ export interface SandboxSegment {
   durationMs?: number;
 }
 
-export type MessageSegment = TextSegment | ThinkingSegment | ToolsSegment | SandboxSegment;
+export interface ErrorSegment {
+  type: 'error';
+  message: string;
+  detail?: string;
+  errorCode?: string;
+}
+
+export type MessageSegment = TextSegment | ThinkingSegment | ToolsSegment | SandboxSegment | ErrorSegment;
 
 export interface ChatAttachment {
   url: string;
@@ -115,8 +122,12 @@ function ensureLastAgentMessage(messages: ChatMessage[]): {
 
 export function getMessageText(message: ChatMessage): string {
   return message.segments
-    .filter((segment): segment is TextSegment => segment.type === 'text')
-    .map((segment) => segment.content)
+    .map((segment) => {
+      if (segment.type === 'text') return segment.content;
+      if (segment.type === 'error') return segment.message;
+      return '';
+    })
+    .filter(Boolean)
     .join('\n\n');
 }
 
@@ -405,7 +416,13 @@ export function reduceChatState(state: ChatState, event: SseEvent): ChatState {
           };
         }
       }
-      break;
+      return {
+        ...state,
+        messages,
+        isThinking: false,
+        planTodos,
+        streamStatus: StreamStatusEnum.CLOSED,
+      };
     }
 
     case 'error': {
@@ -413,7 +430,15 @@ export function reduceChatState(state: ChatState, event: SseEvent): ChatState {
       const ensured = ensureLastAgentMessage(messages);
       messages = ensured.messages;
       const last = messages[ensured.index]!;
-      const segments = [...last.segments, { type: 'text', content: `Error: ${event.message}` } satisfies TextSegment];
+      const segments = [
+        ...last.segments,
+        {
+          type: 'error',
+          message: event.message,
+          detail: event.detail,
+          errorCode: event.errorCode,
+        } satisfies ErrorSegment,
+      ];
       messages[ensured.index] = {
         ...last,
         segments,

@@ -1,5 +1,14 @@
 # @connexup/ai-chat
 
+## 1.1.3
+
+### Patch Changes
+
+- Fix artifact drawer fullscreen layout and theme when portaled outside `.ai-chat`
+- Add ghost button styles (`ai-chat-icon-btn`, `ai-chat-ghost-btn`) with hover backgrounds
+- Fix artifact card file variant green border/background after scoped CSS reset
+- Apply ghost button styles to tool JSON expand, copy, and Preview/Source tabs
+
 ## 1.1.2
 
 ### Patch Changes

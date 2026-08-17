@@ -1,5 +1,11 @@
 # @connexup/ai-chat
 
+## 1.1.6
+
+### Patch Changes
+
+- Add `variables` prop to `AiChat` and pass it through on `sendMessage`
+
 ## 1.1.5
 
 ### Patch Changes

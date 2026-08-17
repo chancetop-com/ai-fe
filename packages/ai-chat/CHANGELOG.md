@@ -1,5 +1,13 @@
 # @connexup/ai-chat
 
+## 1.1.5
+
+### Patch Changes
+
+- Add custom display message for `QUOTA_EXCEEDED` stream errors in `ErrorBlock`
+- Export `DEFAULT_STREAM_ERROR_MESSAGES` and `resolveStreamErrorMessage` for reuse
+- Align `formatApiError` quota messaging with stream error copy
+
 ## 1.1.4
 
 ### Patch Changes

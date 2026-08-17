@@ -1,6 +1,6 @@
 {
   "name": "@connexup/ai-chat",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "AI chat UI with native HTML, powered by @connexup/ai-api and @connexup/ai-react",
   "type": "module",
   "main": "dist/index.js",

@@ -1,3 +1,5 @@
+import { resolveStreamErrorMessage } from '../stream-error-messages';
+
 export interface ErrorBlockProps {
   message: string;
   detail?: string;
@@ -9,6 +11,8 @@ function colorMix(color: string, percent: number) {
 }
 
 export function ErrorBlock({ message, detail, errorCode }: ErrorBlockProps) {
+  const displayMessage = resolveStreamErrorMessage(errorCode, message);
+
   return (
     <div
       className="rounded-xl border px-4 py-3 text-sm"
@@ -18,10 +22,7 @@ export function ErrorBlock({ message, detail, errorCode }: ErrorBlockProps) {
         color: 'var(--color-error)',
       }}
     >
-      Error:
-      {errorCode ? <div className="text-xs font-medium mb-1 opacity-80">{errorCode}</div> : null}
-      <div className="whitespace-pre-wrap font-medium">{message}</div>
-      {detail ? <div className="text-xs mt-1 opacity-80 whitespace-pre-wrap">{detail}</div> : null}
+      <div className="whitespace-pre-wrap font-medium">{displayMessage}</div>
     </div>
   );
 }

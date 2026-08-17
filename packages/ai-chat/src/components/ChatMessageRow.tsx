@@ -227,11 +227,7 @@ export const ChatMessageRow = memo(function ChatMessageRow({
             {hasRenderableErrors
               ? errorSegs.map((errorSeg, index) => (
                   <div key={`error-${index}`} className={index < errorSegs.length - 1 ? 'mb-2' : ''}>
-                    <ErrorBlock
-                      message={errorSeg.message}
-                      detail={errorSeg.detail}
-                      errorCode={errorSeg.errorCode}
-                    />
+                    <ErrorBlock message={errorSeg.message} detail={errorSeg.detail} errorCode={errorSeg.errorCode} />
                   </div>
                 ))
               : null}

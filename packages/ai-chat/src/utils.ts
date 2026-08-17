@@ -1,4 +1,5 @@
 import { APIException } from '@connexup/ai-api';
+import { DEFAULT_STREAM_ERROR_MESSAGES } from './stream-error-messages';
 
 export function formatMessageTime(timestamp?: string): string {
   if (!timestamp) return '';
@@ -82,8 +83,11 @@ export function formatJson(value: string): string {
 
 export function resolveApiErrorMessage(error: unknown): string | null {
   if (error instanceof APIException) {
+    const mappedMessage = error.errorCode ? DEFAULT_STREAM_ERROR_MESSAGES[error.errorCode ?? ''] : undefined;
+    if (mappedMessage) return mappedMessage;
+
     if (error.statusCode === 401) return 'Unauthorized';
-    if (error.statusCode === 429) return 'The token limit has been used up. Please try again tomorrow';
+    if (error.statusCode === 429) return DEFAULT_STREAM_ERROR_MESSAGES.QUOTA_EXCEEDED!;
     if (error.statusCode === 500) return 'Internal server error';
     if (error.message) return error.message;
   }

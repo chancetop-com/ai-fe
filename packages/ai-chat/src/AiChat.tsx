@@ -28,7 +28,12 @@ export interface AiChatProps extends UseAiChatOptions {
   showConnectionControls?: boolean;
   showSessionSidebar?: boolean;
   showAgentSelector?: boolean;
-  onSend?: (message: string, attachments?: ComposerAttachment[]) => void | Promise<void>;
+  variables?: Record<string, string>;
+  onSend?: (
+    message: string,
+    variables?: Record<string, string>,
+    attachments?: ComposerAttachment[]
+  ) => void | Promise<void>;
   onApprove?: (callId: string, approved: boolean) => void | Promise<void>;
 }
 
@@ -85,6 +90,7 @@ export function AiChat({
   showConnectionControls = false,
   showSessionSidebar = true,
   showAgentSelector = true,
+  variables,
   onSend,
   onApprove,
   refreshApiKey,
@@ -243,9 +249,9 @@ export function AiChat({
     setActionLoading(true);
     try {
       if (onSend) {
-        await onSend(trimmed, attachments);
+        await onSend(trimmed, variables, attachments);
       } else {
-        await sendMessage(trimmed, undefined, mappedAttachments);
+        await sendMessage(trimmed, variables, mappedAttachments);
       }
     } catch (error) {
       message.error(formatApiError(error, 'Failed to send message'));

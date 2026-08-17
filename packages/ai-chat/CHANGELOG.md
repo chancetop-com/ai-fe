@@ -1,5 +1,13 @@
 # @connexup/ai-chat
 
+## 1.1.4
+
+### Patch Changes
+
+- Parse history message attachments from `content` (image URLs, sandbox file markers) and render as images or file chips
+- Stop thinking and tool in-progress UI when stream closes (cancel turn, disconnect, error) via `message.streaming`
+- `ToolsBlock` respects `isStreaming` instead of mutating tool events on cancel
+
 ## 1.1.3
 
 ### Patch Changes

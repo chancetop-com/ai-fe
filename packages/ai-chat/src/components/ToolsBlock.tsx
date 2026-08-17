@@ -71,7 +71,7 @@ function JsonResultView({ value }: { value: string }) {
   );
 }
 
-export function ToolsBlock({ tools }: { tools: ToolEvent[] }) {
+export function ToolsBlock({ tools, isStreaming = false }: { tools: ToolEvent[]; isStreaming?: boolean }) {
   const [expanded, setExpanded] = useState(true);
   const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
   const [collapsedChildren, setCollapsedChildren] = useState<Set<string>>(new Set());
@@ -117,6 +117,7 @@ export function ToolsBlock({ tools }: { tools: ToolEvent[] }) {
   };
 
   const isRunning = (tool: ToolEvent): boolean => {
+    if (!isStreaming) return false;
     if (tool.type === 'start') return true;
     if (tool.children?.some(isRunning)) return true;
     return false;
@@ -134,7 +135,7 @@ export function ToolsBlock({ tools }: { tools: ToolEvent[] }) {
     const detail = toolDetail(tool);
     const headerContent = (
       <>
-        {tool.type === 'start' ? (
+        {tool.type === 'start' && isStreaming ? (
           <Loader2 size={14} className="animate-spin shrink-0" style={{ color: 'var(--color-warning)' }} />
         ) : (
           <span

@@ -69,6 +69,7 @@ export interface SessionHistoryMessage {
   content: string;
   thinking?: string;
   tools?: ToolCallRecord[];
+  attachments?: SendMessageAttachment[];
   seq?: number;
   trace_id?: string;
   timestamp?: string;

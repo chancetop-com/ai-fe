@@ -6,6 +6,7 @@ import type { SessionArtifact, TodoStatus } from '@connexup/ai-api';
 import { Bot, Loader2, Paperclip, Shield, ShieldOff, Sparkles, User } from 'lucide-react';
 import type { ChatMessage } from '../chat-state';
 import { getMessageArtifacts } from '../artifact-utils';
+import { isImageAttachment } from '../attachment-utils';
 import { getMessageText } from '../chat-state';
 import { ArtifactCard } from './ArtifactCard';
 import type { ArtifactSpec } from './artifactTypes';
@@ -130,7 +131,7 @@ export const ChatMessageRow = memo(function ChatMessageRow({
 
         {toolsSeg && toolsSeg.tools.length > 0 ? (
           <div className="mb-3">
-            <ToolsBlock tools={toolsSeg.tools} />
+            <ToolsBlock tools={toolsSeg.tools} isStreaming={isStreaming} />
           </div>
         ) : null}
 
@@ -148,7 +149,7 @@ export const ChatMessageRow = memo(function ChatMessageRow({
                 style={{ justifyContent: isUser ? 'flex-end' : 'flex-start' }}
               >
                 {attachments.map((attachment, index) =>
-                  attachment.type === 'IMAGE' ? (
+                  isImageAttachment(attachment) && attachment.url ? (
                     <a
                       key={index}
                       href={attachment.url}
@@ -167,7 +168,7 @@ export const ChatMessageRow = memo(function ChatMessageRow({
                         loading="lazy"
                       />
                     </a>
-                  ) : (
+                  ) : attachment.url ? (
                     <a
                       key={index}
                       href={attachment.url}
@@ -183,6 +184,19 @@ export const ChatMessageRow = memo(function ChatMessageRow({
                       <Paperclip size={12} />
                       <span className="max-w-[120px] truncate">{attachment.file_name || attachment.type}</span>
                     </a>
+                  ) : (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium"
+                      style={{
+                        background: 'var(--color-bg-tertiary)',
+                        border: '1px solid var(--color-border)',
+                        color: 'var(--color-text-secondary)',
+                      }}
+                    >
+                      <Paperclip size={12} />
+                      <span className="max-w-[200px] truncate">{attachment.file_name || attachment.type}</span>
+                    </span>
                   )
                 )}
               </div>

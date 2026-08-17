@@ -108,6 +108,18 @@ export function mapAttachmentType(contentType: string): ComposerAttachment['type
   return 'FILE';
 }
 
+export function isImageAttachment(attachment: {
+  type?: string;
+  content_type?: string;
+  file_name?: string;
+  url?: string;
+}): boolean {
+  if (attachment.type?.toUpperCase() === 'IMAGE') return true;
+  if (attachment.content_type?.startsWith('image/')) return true;
+  const name = attachment.file_name?.toLowerCase() ?? attachment.url?.toLowerCase() ?? '';
+  return /\.(png|jpe?g|gif|webp|svg|bmp|ico)(\?|$)/.test(name);
+}
+
 export function toSendMessageAttachments(attachments: ComposerAttachment[]): SendMessageAttachment[] {
   return attachments.map((attachment) => ({
     url: attachment.url,

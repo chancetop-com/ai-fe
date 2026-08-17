@@ -97,7 +97,8 @@ export const ChatMessagesPanel = memo(function ChatMessagesPanel({
   const lastStreamingKey = useMemo(() => {
     if (!isStreaming) return null;
     const last = messages[messages.length - 1];
-    return last?.role === 'assistant' ? (last.key ?? null) : null;
+    if (last?.role !== 'assistant' || !last.streaming) return null;
+    return last.key ?? null;
   }, [isStreaming, messages]);
 
   const handleMessagesScroll = useCallback(() => {

@@ -1,6 +1,7 @@
 import { SessionHistoryMessage, SessionStatus, SseEvent, TodoStatus, SendMessageAttachment } from '@connexup/ai-api';
 import { StreamStatusEnum } from '@connexup/ai-api';
 import type { AiLibError } from '@connexup/ai-api';
+import { parseHistoryMessageContent } from './history-content';
 
 export interface ToolEvent {
   type: 'start' | 'result';
@@ -105,6 +106,16 @@ export const initialChatState: ChatState = {
 
 function hasAnySegments(segments?: MessageSegment[]): boolean {
   return Boolean(segments && segments.length > 0);
+}
+
+function stopStreamingLastAssistantMessage(messages: ChatMessage[]): ChatMessage[] {
+  if (messages.length === 0) return messages;
+  const lastIndex = messages.length - 1;
+  const last = messages[lastIndex];
+  if (last?.role !== 'assistant' || !last.streaming) return messages;
+  const next = [...messages];
+  next[lastIndex] = { ...last, streaming: false };
+  return next;
 }
 
 function ensureLastAgentMessage(messages: ChatMessage[]): {
@@ -521,17 +532,20 @@ export function applyStreamState(
   error: AiLibError = null,
   sessionStatus: SessionStatus | null = state.sessionStatus
 ): ChatState {
+  const shouldStopMessageStreaming =
+    streamStatus === StreamStatusEnum.CLOSED || streamStatus === StreamStatusEnum.ERROR;
+
   return {
     ...state,
+    messages: shouldStopMessageStreaming ? stopStreamingLastAssistantMessage(state.messages) : state.messages,
     streamStatus,
     error,
     sessionStatus,
-    isThinking:
-      streamStatus === StreamStatusEnum.CLOSED || streamStatus === StreamStatusEnum.ERROR ? false : state.isThinking,
+    isThinking: shouldStopMessageStreaming ? false : state.isThinking,
   };
 }
 
-function buildHistorySegments(item: SessionHistoryMessage): MessageSegment[] {
+function buildHistorySegments(item: SessionHistoryMessage, contentOverride?: string): MessageSegment[] {
   const segments: MessageSegment[] = [];
 
   if (item.thinking) {
@@ -552,8 +566,9 @@ function buildHistorySegments(item: SessionHistoryMessage): MessageSegment[] {
     });
   }
 
-  if (item.content) {
-    segments.push({ type: 'text', content: item.content });
+  const text = contentOverride ?? item.content;
+  if (text) {
+    segments.push({ type: 'text', content: text });
   }
 
   return segments;
@@ -562,6 +577,22 @@ function buildHistorySegments(item: SessionHistoryMessage): MessageSegment[] {
 export function historyToChatMessages(history: SessionHistoryMessage[]): ChatMessage[] {
   return history.map((item, index) => {
     const role = item.role === 'user' ? 'user' : 'assistant';
+    const explicitAttachments = (item as SessionHistoryMessage & { attachments?: SendMessageAttachment[] }).attachments;
+
+    if (role === 'user' && item.content) {
+      const parsed = parseHistoryMessageContent(item.content, {
+        explicitAttachments,
+        metadata: item.metadata,
+      });
+      return {
+        key: `history-${item.seq ?? index}-${item.timestamp ?? index}`,
+        role,
+        segments: buildHistorySegments(item, parsed.text),
+        timestamp: item.timestamp,
+        metadata: parsed.attachments.length > 0 ? { attachments: parsed.attachments } : undefined,
+      };
+    }
+
     return {
       key: `history-${item.seq ?? index}-${item.timestamp ?? index}`,
       role,

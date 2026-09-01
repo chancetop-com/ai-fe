@@ -1,5 +1,19 @@
 # @connexup/ai-chat
 
+## 1.1.9
+
+### Patch Changes
+
+- Fix markdown `[text](url)` links losing `href` in `prepareAgentMarkdown`
+- Set `sessionStatus: idle` on `turn_complete`; ignore stale `status_change: running` when no active turn
+- Handle server-side cancel via `cancelledSessionIdsRef`; filter SSE events by session id
+- Support `environment_output_chunk` and `turn_complete.output` backfill for empty replies
+- Refresh sidebar after turn complete; watchdog error-status handling
+- Export `ArtifactFilePreview`, `buildArtifactShareUrl`, `FileApi`, `useFileApi`
+- Updated dependencies
+  - @connexup/ai-api@1.1.1
+  - @connexup/ai-react@1.1.1
+
 ## 1.1.8
 
 ### Patch Changes

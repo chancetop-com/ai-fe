@@ -1,5 +1,14 @@
 # @connexup/ai-react
 
+## 1.1.1
+
+### Patch Changes
+
+- Expose `connectSessionEvents` from `useAgentSession` for running-session SSE reconnect
+- Pass `eventsPath` through to `useAiLib`
+- Updated dependencies
+  - @connexup/ai-api@1.1.1
+
 ## 1.1.0
 
 ### Minor Changes

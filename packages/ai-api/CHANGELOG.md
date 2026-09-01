@@ -1,5 +1,13 @@
 # @connexup/ai-api
 
+## 1.1.1
+
+### Patch Changes
+
+- Add `connectSessionEvents` for `PUT /api/sessions/events` session event replay
+- Add `SseEnvironmentOutputChunkEvent` and `environment_output_chunk` to SSE types
+- Add `eventsPath` / `ConnectSessionEventsOptions`; expose `buildSessionEventsUrl` in utils
+
 ## 1.1.0
 
 ### Minor Changes

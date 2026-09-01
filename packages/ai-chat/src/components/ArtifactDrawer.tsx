@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { defaultMarkdownComponents } from '../markdown-components';
+import { prepareAgentMarkdown } from '../markdown-content';
 import type { ArtifactSpec } from './artifactTypes';
 
 const WIDTH_STORAGE_KEY = 'artifact_drawer_width';
@@ -28,13 +30,20 @@ const TEXT_EXT_RE =
   /\.(html?|css|js|jsx|ts|tsx|mjs|json|md|markdown|txt|xml|svg|py|java|kt|go|rb|rs|sh|bash|yaml|yml|toml|csv|tsv|sql|conf|ini|log)$/i;
 
 type ViewMode = 'preview' | 'source';
-type ShareStatus = 'idle' | 'loading' | 'copied' | 'error';
+type ShareStatus = 'idle' | 'copied';
 
 export interface ArtifactDrawerProps {
   artifact: ArtifactSpec;
   fileApi: FileApi;
   onClose: () => void;
+  buildShareUrl: (fileId: string) => string;
   hideShare?: boolean;
+}
+
+export function buildArtifactShareUrl(fileId: string, sharePath: string): string {
+  const url = new URL(sharePath, window.location.origin);
+  url.searchParams.set('fileId', fileId);
+  return url.toString();
 }
 
 function iconFor(spec: ArtifactSpec) {
@@ -117,7 +126,7 @@ function formatJsonText(value: string): string {
   }
 }
 
-export function ArtifactDrawer({ artifact, fileApi, onClose, hideShare = false }: ArtifactDrawerProps) {
+export function ArtifactDrawer({ artifact, fileApi, onClose, buildShareUrl, hideShare = false }: ArtifactDrawerProps) {
   const canPreview = supportsPreview(artifact);
   const canSource = supportsSource(artifact);
   const [mode, setMode] = useState<ViewMode>(canPreview ? 'preview' : 'source');
@@ -244,27 +253,18 @@ export function ArtifactDrawer({ artifact, fileApi, onClose, hideShare = false }
   };
 
   const handleShare = async () => {
-    if (!artifact.fileId || shareStatus === 'loading') return;
-    setShareStatus('loading');
+    if (!artifact.fileId || shareStatus !== 'idle') return;
+
+    const shareUrl = buildShareUrl(artifact.fileId);
     try {
-      const response = await fileApi.share(artifact.fileId);
-      const shareUrl = new URL(response.share_url, window.location.origin).toString();
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-      } catch {
-        window.prompt('Share link', shareUrl);
-      }
-      setShareStatus('copied');
-      setShareToast('Share link copied');
-      window.setTimeout(() => setShareStatus('idle'), 1800);
-      window.setTimeout(() => setShareToast(null), 2500);
-    } catch (error) {
-      console.warn('share failed', error);
-      setShareStatus('error');
-      setShareToast('Share failed');
-      window.setTimeout(() => setShareStatus('idle'), 1800);
-      window.setTimeout(() => setShareToast(null), 2500);
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      window.prompt('Share link', shareUrl);
     }
+    setShareStatus('copied');
+    setShareToast('Share link copied');
+    window.setTimeout(() => setShareStatus('idle'), 1800);
+    window.setTimeout(() => setShareToast(null), 2500);
   };
 
   useEffect(() => {
@@ -336,12 +336,7 @@ export function ArtifactDrawer({ artifact, fileApi, onClose, hideShare = false }
             </button>
           ) : null}
           {downloadUrl ? (
-            <button
-              type="button"
-              onClick={() => void handleDownload()}
-              className="ai-chat-icon-btn"
-              title="Download"
-            >
+            <button type="button" onClick={() => void handleDownload()} className="ai-chat-icon-btn" title="Download">
               <Download size={14} />
             </button>
           ) : null}
@@ -350,25 +345,13 @@ export function ArtifactDrawer({ artifact, fileApi, onClose, hideShare = false }
               <button
                 type="button"
                 onClick={() => void handleShare()}
-                disabled={shareStatus === 'loading'}
                 className="ai-chat-icon-btn"
                 style={{
-                  color:
-                    shareStatus === 'error'
-                      ? 'var(--color-error)'
-                      : shareStatus === 'copied'
-                        ? 'var(--color-success)'
-                        : undefined,
+                  color: shareStatus === 'copied' ? 'var(--color-success)' : undefined,
                 }}
                 title="Share"
               >
-                {shareStatus === 'loading' ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : shareStatus === 'copied' ? (
-                  <Check size={14} />
-                ) : (
-                  <Share2 size={14} />
-                )}
+                {shareStatus === 'copied' ? <Check size={14} /> : <Share2 size={14} />}
               </button>
               {shareToast ? (
                 <div
@@ -460,13 +443,7 @@ function PreviewIframe({
 }) {
   return (
     <div className="ai-chat-artifact-preview-frame">
-      <iframe
-        title={title}
-        src={src}
-        srcDoc={srcDoc}
-        sandbox={sandbox}
-        className="ai-chat-artifact-preview-iframe"
-      />
+      <iframe title={title} src={src} srcDoc={srcDoc} sandbox={sandbox} className="ai-chat-artifact-preview-iframe" />
     </div>
   );
 }
@@ -506,7 +483,9 @@ function renderPreview(
     return (
       <PreviewScroll>
         <div className="px-6 py-4 text-sm ai-chat-markdown">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{spec.content}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]} components={defaultMarkdownComponents}>
+            {prepareAgentMarkdown(spec.content)}
+          </ReactMarkdown>
         </div>
       </PreviewScroll>
     );
@@ -586,7 +565,9 @@ function renderPreview(
       return (
         <PreviewScroll>
           <div className="px-6 py-4 text-sm ai-chat-markdown">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{state.fileText}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={defaultMarkdownComponents}>
+              {prepareAgentMarkdown(state.fileText)}
+            </ReactMarkdown>
           </div>
         </PreviewScroll>
       );

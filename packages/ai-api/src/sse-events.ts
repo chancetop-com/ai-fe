@@ -96,6 +96,13 @@ export interface SseSandboxEvent extends SseBaseEvent {
   duration_ms?: number;
 }
 
+export interface SseEnvironmentOutputChunkEvent extends SseBaseEvent {
+  type: 'environment_output_chunk';
+  source: string;
+  call_id: string;
+  chunk: string;
+}
+
 export type SseEvent =
   | SseTextChunkEvent
   | SseReasoningChunkEvent
@@ -107,7 +114,8 @@ export type SseEvent =
   | SseStatusChangeEvent
   | SsePlanUpdateEvent
   | SseCompressionEvent
-  | SseSandboxEvent;
+  | SseSandboxEvent
+  | SseEnvironmentOutputChunkEvent;
 
 export const SSE_EVENT_TYPES = [
   'text_chunk',
@@ -121,6 +129,7 @@ export const SSE_EVENT_TYPES = [
   'plan_update',
   'compression',
   'sandbox',
+  'environment_output_chunk',
 ] as const;
 
 export type SseEventType = (typeof SSE_EVENT_TYPES)[number];
@@ -173,4 +182,10 @@ export function isSseCompressionEvent(event: SseEvent): event is SseCompressionE
 
 export function isSseSandboxEvent(event: SseEvent): event is SseSandboxEvent {
   return event.type === 'sandbox';
+}
+
+export function isSseEnvironmentOutputChunkEvent(
+  event: SseEvent
+): event is SseEnvironmentOutputChunkEvent {
+  return event.type === 'environment_output_chunk';
 }

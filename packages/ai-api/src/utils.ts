@@ -31,8 +31,20 @@ export function buildMessageStreamUrl(
   return `${joinApiUrl(baseUrl, streamPath)}?${params.toString()}`;
 }
 
-/** @deprecated Use buildMessageStreamUrl instead */
-export const buildSessionEventsUrl = buildMessageStreamUrl;
+export function buildSessionEventsUrl(
+  baseUrl: string,
+  sessionId: string,
+  eventsPath = '/api/sessions/events'
+): string {
+  const params = new URLSearchParams({
+    'agent-session-id': sessionId,
+  });
+
+  return `${joinApiUrl(baseUrl, eventsPath)}?${params.toString()}`;
+}
+
+/** @deprecated Use buildSessionEventsUrl instead */
+export const buildLegacySessionEventsUrl = buildMessageStreamUrl;
 
 export function joinApiUrl(baseUrl: string, path: string): string {
   const normalizedBase = baseUrl.replace(/\/$/, '');

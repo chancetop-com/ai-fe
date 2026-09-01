@@ -108,6 +108,34 @@ function hasAnySegments(segments?: MessageSegment[]): boolean {
   return Boolean(segments && segments.length > 0);
 }
 
+function hasTextSegment(segments?: MessageSegment[]): boolean {
+  return Boolean(segments?.some((segment) => segment.type === 'text' && segment.content.trim()));
+}
+
+function appendEnvironmentOutputToTools(tools: ToolEvent[], callId: string, chunk: string): {
+  tools: ToolEvent[];
+  changed: boolean;
+} {
+  let changed = false;
+
+  const appendOutput = (tool: ToolEvent): ToolEvent => {
+    let next = tool;
+    if (tool.callId === callId) {
+      changed = true;
+      next = { ...tool, output: (tool.output || '') + chunk };
+    }
+    if (tool.children) {
+      const children = tool.children.map(appendOutput);
+      if (children.some((child, index) => child !== tool.children![index])) {
+        next = { ...next, children };
+      }
+    }
+    return next;
+  };
+
+  return { tools: tools.map(appendOutput), changed };
+}
+
 function stopStreamingLastAssistantMessage(messages: ChatMessage[]): ChatMessage[] {
   if (messages.length === 0) return messages;
   const lastIndex = messages.length - 1;
@@ -420,10 +448,16 @@ export function reduceChatState(state: ChatState, event: SseEvent): ChatState {
         if (event.cancelled && !hasAnySegments(last.segments)) {
           messages = messages.slice(0, -1);
         } else {
+          const timestamp = event.timestamp || new Date().toISOString();
+          const segments =
+            !event.cancelled && !hasTextSegment(last.segments) && event.output
+              ? [...last.segments, { type: 'text' as const, content: event.output }]
+              : last.segments;
           messages[messages.length - 1] = {
             ...last,
+            segments,
             streaming: false,
-            timestamp: event.timestamp || new Date().toISOString(),
+            timestamp,
           };
         }
       }
@@ -432,6 +466,7 @@ export function reduceChatState(state: ChatState, event: SseEvent): ChatState {
         messages,
         isThinking: false,
         planTodos,
+        sessionStatus: 'idle',
         streamStatus: StreamStatusEnum.CLOSED,
       };
     }
@@ -489,6 +524,46 @@ export function reduceChatState(state: ChatState, event: SseEvent): ChatState {
           timestamp: event.timestamp,
         });
       }
+      break;
+    }
+
+    case 'environment_output_chunk': {
+      const chunk = event.chunk || '';
+      if (!chunk) break;
+
+      const ensured = ensureLastAgentMessage(messages);
+      messages = ensured.messages;
+      const last = messages[ensured.index]!;
+      const segments = [...last.segments];
+      let toolsSegIdx = segments.findIndex((segment) => segment.type === 'tools');
+      if (toolsSegIdx < 0) {
+        segments.push({ type: 'tools', tools: [] });
+        toolsSegIdx = segments.length - 1;
+      }
+
+      const toolsSeg = segments[toolsSegIdx] as ToolsSegment;
+      const { tools, changed } = appendEnvironmentOutputToTools(toolsSeg.tools, event.call_id, chunk);
+      segments[toolsSegIdx] = {
+        ...toolsSeg,
+        tools: changed
+          ? tools
+          : [
+              ...tools,
+              {
+                type: 'start',
+                tool: event.source || 'environment',
+                callId: event.call_id,
+                output: chunk,
+              },
+            ],
+      };
+
+      messages[ensured.index] = {
+        ...last,
+        segments,
+        streaming: true,
+        timestamp: event.timestamp,
+      };
       break;
     }
 
@@ -600,4 +675,23 @@ export function historyToChatMessages(history: SessionHistoryMessage[]): ChatMes
       timestamp: item.timestamp,
     };
   });
+}
+
+export function applyRunningSessionMessages(messages: ChatMessage[]): ChatMessage[] {
+  if (messages.length === 0) {
+    return [createAgentPlaceholder()];
+  }
+
+  const last = messages[messages.length - 1];
+  if (last?.role === 'user') {
+    return [...messages, createAgentPlaceholder()];
+  }
+
+  if (last?.role === 'assistant') {
+    return messages.map((message, index) =>
+      index === messages.length - 1 ? { ...message, streaming: true } : message
+    );
+  }
+
+  return [...messages, createAgentPlaceholder()];
 }

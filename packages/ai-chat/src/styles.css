@@ -98,6 +98,12 @@
 }
 
 .ai-chat :where(a) {
+  display: inline;
+  width: auto;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
   color: inherit;
   text-decoration: none;
 }
@@ -491,9 +497,20 @@
   opacity: 1;
 }
 
-.ai-chat-markdown :where(a) {
+.ai-chat .ai-chat-markdown :where(a),
+.ai-chat-markdown a.ai-chat-markdown-link {
+  display: inline;
+  width: auto;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
   color: var(--color-primary);
   text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .ai-chat-markdown :where(blockquote) {

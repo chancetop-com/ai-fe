@@ -6,6 +6,7 @@ export interface AiLibOptions {
   apiKey?: string;
   sessionId?: string;
   streamPath?: string;
+  eventsPath?: string;
   loggerUrl?: string;
   acceptEventTypes?: SseEventType[];
 }
@@ -18,6 +19,12 @@ export interface AiLibSubscription {
 }
 
 export interface SendMessageStreamOptions extends SendMessageRequest {
+  sessionId?: string;
+  apiKey?: string;
+  headers?: Record<string, string>;
+}
+
+export interface ConnectSessionEventsOptions {
   sessionId?: string;
   apiKey?: string;
   headers?: Record<string, string>;

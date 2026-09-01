@@ -11,7 +11,7 @@ import { useAiLib } from './useAiLib';
 import { useSessionApi } from './useSessionApi';
 
 export interface UseAgentSessionOptions
-  extends Pick<AiLibOptions, 'baseUrl' | 'apiKey' | 'sessionId' | 'streamPath' | 'loggerUrl' | 'acceptEventTypes'> {
+  extends Pick<AiLibOptions, 'baseUrl' | 'apiKey' | 'sessionId' | 'streamPath' | 'eventsPath' | 'loggerUrl' | 'acceptEventTypes'> {
   sessionApi?: SessionApi;
 }
 
@@ -27,6 +27,7 @@ export function useAgentSession(options: UseAgentSessionOptions) {
     apiKey: options.apiKey,
     sessionId,
     streamPath: options.streamPath,
+    eventsPath: options.eventsPath,
     loggerUrl: options.loggerUrl,
     acceptEventTypes: options.acceptEventTypes,
   });
@@ -77,6 +78,21 @@ export function useAgentSession(options: UseAgentSessionOptions) {
     [aiLib, resolveSessionId]
   );
 
+  const connectSessionEvents = useCallback(
+    (targetSessionId?: string, apiKeyOverride?: string) => {
+      const resolvedSessionId = targetSessionId ?? resolveSessionId();
+      if (!resolvedSessionId) {
+        throw new Error('sessionId is required to connect session events');
+      }
+
+      aiLib.connectSessionEvents({
+        sessionId: resolvedSessionId,
+        apiKey: apiKeyOverride,
+      });
+    },
+    [aiLib, resolveSessionId]
+  );
+
   const approveToolCall = useCallback(
     async (callId: string, decision: ApproveDecision | boolean) => {
       const resolvedSessionId = resolveSessionId();
@@ -120,6 +136,7 @@ export function useAgentSession(options: UseAgentSessionOptions) {
     setSessionId,
     createSession,
     setApiKey,
+    connectSessionEvents,
     sendMessage,
     approveToolCall,
     cancelTurn,

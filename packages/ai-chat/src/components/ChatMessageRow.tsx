@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import type { ComponentProps } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -16,6 +16,8 @@ import { PlanUpdateBlock } from './PlanUpdateBlock';
 import { SandboxBlock } from './SandboxBlock';
 import { ThinkingBlock } from './ThinkingBlock';
 import { ToolsBlock } from './ToolsBlock';
+import { defaultMarkdownComponents, mergeMarkdownComponents } from '../markdown-components';
+import { prepareAgentMarkdown } from '../markdown-content';
 import { formatMessageTime, formatMessageTimeFull } from '../utils';
 
 export interface ChatMessageRowProps {
@@ -49,6 +51,17 @@ export const ChatMessageRow = memo(function ChatMessageRow({
   onOpenArtifact,
   onApprove,
 }: ChatMessageRowProps) {
+  const textSegContent =
+    message.segments.find((segment) => segment.type === 'text')?.content ?? '';
+  const preparedAgentMarkdown = useMemo(
+    () => (textSegContent ? prepareAgentMarkdown(textSegContent) : ''),
+    [textSegContent]
+  );
+  const markdownComponents = useMemo(
+    () => mergeMarkdownComponents(defaultMarkdownComponents, agentMarkdownComponents ?? undefined),
+    [agentMarkdownComponents]
+  );
+
   const isUser = message.role === 'user';
   const isAgent = message.role === 'assistant';
   const attachments = message.metadata?.attachments ?? [];
@@ -215,8 +228,8 @@ export const ChatMessageRow = memo(function ChatMessageRow({
                   <div className="whitespace-pre-wrap">{textSeg.content}</div>
                 ) : (
                   <div className="ai-chat-markdown">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={agentMarkdownComponents}>
-                      {textSeg.content}
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                      {preparedAgentMarkdown}
                     </ReactMarkdown>
                   </div>
                 )}

@@ -1,5 +1,20 @@
 # @connexup/ai-chat
 
+## 1.1.8
+
+### Patch Changes
+
+- Restore history attachment parsing and `streaming` cleanup on stream close in `chat-state`
+- Add session running reconnect via `PUT /api/sessions/events` on hydrate, refresh, and in-flight SSE disconnect recovery
+- Fix `cancelTurn` when backend status stays `running` after 204; export `stopStream` from `useAiChat`
+
+## 1.1.7
+
+### Patch Changes
+
+- Fix `cancelTurn` treating session as idle locally when backend status is still `running` after 204 (async cancel); stop calling `getStatus` immediately after cancel
+- Track locally cancelled sessions to ignore stale `status_change: running` SSE events until `turn_complete`
+
 ## 1.1.6
 
 ### Patch Changes

@@ -8,7 +8,7 @@ import {
   SseEventType,
   SessionStatus,
 } from './sse-events';
-import { AiLibError, AiLibOptions, AiLibSubscription, StreamStatusEnum, SendMessageStreamOptions } from './types';
+import { AiLibError, AiLibOptions, AiLibSubscription, StreamStatusEnum, SendMessageStreamOptions, ConnectSessionEventsOptions } from './types';
 import { Logger } from './logger';
 import {
   asAPIException,
@@ -16,12 +16,27 @@ import {
   normalizeRequestError,
   parseErrorResponse,
 } from './api-request';
-import { buildAuthHeaders, buildMessageStreamUrl, safeParse } from './utils';
+import { buildAuthHeaders, buildMessageStreamUrl, buildSessionEventsUrl, safeParse } from './utils';
 
 interface ResolvedStreamOptions {
   url: string;
   headers: Record<string, string>;
-  body: string;
+  method: 'POST' | 'PUT';
+  body?: string;
+}
+
+type StreamCloseReason =
+  | 'manual'
+  | 'remote_close'
+  | 'stream_error'
+  | 'session_error'
+  | 'http_error';
+
+interface CloseStreamOptions {
+  streamStatus?: StreamStatusEnum;
+  error?: AiLibError;
+  notify?: boolean;
+  reason?: StreamCloseReason;
 }
 
 export class AiLib {
@@ -29,6 +44,7 @@ export class AiLib {
   #apiKey?: string;
   #defaultSessionId?: string;
   #streamPath: string;
+  #eventsPath: string;
   #abortController: AbortController | null = null;
   #startTime: number | null = null;
   #connectingTimes = 0;
@@ -42,6 +58,11 @@ export class AiLib {
   #acceptEventTypes: SseEventType[] | null = null;
   #isManualDisconnect = false;
   #streamPromise: Promise<void> | null = null;
+  #openTime: number | null = null;
+  #lastEventTime: number | null = null;
+  #lastEventType: string | null = null;
+  #eventCount = 0;
+  #currentStreamUrl: string | null = null;
 
   public get streamStatus(): StreamStatusEnum {
     return this.#streamStatus;
@@ -60,12 +81,13 @@ export class AiLib {
   }
 
   constructor(options: AiLibOptions) {
-    const { loggerUrl, baseUrl, apiKey, sessionId, streamPath, acceptEventTypes } = options;
+    const { loggerUrl, baseUrl, apiKey, sessionId, streamPath, eventsPath, acceptEventTypes } = options;
 
     this.#baseUrl = baseUrl;
     this.#apiKey = apiKey;
     this.#defaultSessionId = sessionId;
     this.#streamPath = streamPath ?? '/api/sessions/messages/stream';
+    this.#eventsPath = eventsPath ?? '/api/sessions/events';
 
     this.#logger = new Logger(loggerUrl || '');
     this.#acceptEventTypes = acceptEventTypes ?? null;
@@ -110,6 +132,58 @@ export class AiLib {
     this.#error = error;
   }
 
+  #resetStreamMetrics(url: string) {
+    this.#openTime = null;
+    this.#lastEventTime = null;
+    this.#lastEventType = null;
+    this.#eventCount = 0;
+    this.#currentStreamUrl = url;
+  }
+
+  #recordSseEvent(event: SseEvent) {
+    this.#lastEventTime = Date.now();
+    this.#lastEventType = event.type;
+    this.#eventCount += 1;
+  }
+
+  #streamDurationMs(): number | undefined {
+    if (this.#startTime == null) return undefined;
+    return Date.now() - this.#startTime;
+  }
+
+  #sinceLastEventMs(): number | undefined {
+    if (this.#lastEventTime == null) return undefined;
+    return Date.now() - this.#lastEventTime;
+  }
+
+  #logStreamDiagnostic(
+    action: string,
+    reason: StreamCloseReason | 'open',
+    extra?: Record<string, string | undefined>
+  ) {
+    this.#logger.info({
+      action,
+      info: {
+        trace_id: this.#traceId ?? undefined,
+        reason,
+        url: this.#currentStreamUrl ?? undefined,
+        last_event_type: this.#lastEventType ?? undefined,
+        session_status: this.#sessionStatus ?? undefined,
+        stream_status: this.#streamStatus,
+        manual_disconnect: String(this.#isManualDisconnect),
+        ...extra,
+      },
+      stats: {
+        stream_duration_ms: this.#streamDurationMs(),
+        since_last_event_ms: this.#sinceLastEventMs(),
+        open_duration_ms:
+          this.#openTime == null ? undefined : Date.now() - this.#openTime,
+        event_count: this.#eventCount,
+        connecting_times: this.#connectingTimes,
+      },
+    });
+  }
+
   #resolveStreamOptions(incomingOptions: SendMessageStreamOptions): ResolvedStreamOptions {
     const sessionId = incomingOptions.sessionId ?? this.#defaultSessionId;
     if (!sessionId) {
@@ -132,11 +206,31 @@ export class AiLib {
     return {
       url: buildMessageStreamUrl(this.#baseUrl, sessionId, this.#streamPath),
       headers,
+      method: 'POST',
       body: JSON.stringify({
         message,
         variables: incomingOptions.variables,
         attachments,
       }),
+    };
+  }
+
+  #resolveSessionEventsOptions(incomingOptions: ConnectSessionEventsOptions = {}): ResolvedStreamOptions {
+    const sessionId = incomingOptions.sessionId ?? this.#defaultSessionId;
+    if (!sessionId) {
+      throw new Error('sessionId is required to connect session events');
+    }
+
+    const apiKey = incomingOptions.apiKey ?? this.#apiKey;
+    const headers = buildAuthHeaders(apiKey, {
+      Accept: 'text/event-stream',
+      ...incomingOptions.headers,
+    });
+
+    return {
+      url: buildSessionEventsUrl(this.#baseUrl, sessionId, this.#eventsPath),
+      headers,
+      method: 'PUT',
     };
   }
 
@@ -147,6 +241,8 @@ export class AiLib {
 
   #handleSseEvent(event: SseEvent) {
     if (!this.#shouldAcceptEvent(event)) return;
+
+    this.#recordSseEvent(event);
 
     if (isSseStatusChangeEvent(event)) {
       this.#sessionStatus = event.status;
@@ -177,13 +273,20 @@ export class AiLib {
           errorCode: 'session_error',
           errorMessage: 'Session entered error state',
         },
+        reason: 'session_error',
       });
     }
   }
 
-  #closeStream(options?: { streamStatus?: StreamStatusEnum; error?: AiLibError; notify?: boolean }) {
-    const { streamStatus = StreamStatusEnum.CLOSED, error = null, notify = true } = options ?? {};
+  #closeStream(options: CloseStreamOptions = {}) {
+    const {
+      streamStatus = StreamStatusEnum.CLOSED,
+      error = null,
+      notify = true,
+      reason = 'remote_close',
+    } = options;
 
+    const wasManualDisconnect = this.#isManualDisconnect || reason === 'manual';
     this.#isManualDisconnect = true;
 
     if (this.#abortController) {
@@ -204,19 +307,37 @@ export class AiLib {
         streamStatus,
       },
     });
+    this.#logStreamDiagnostic('SSE_STREAM_END', reason, {
+      close_stream_status: streamStatus,
+      was_manual_disconnect: String(wasManualDisconnect),
+      error_code: error?.errorCode != null ? String(error.errorCode) : undefined,
+      error_message: error?.errorMessage ?? undefined,
+    });
 
     if (notify) {
       this.#notifyDisconnect();
     }
   }
 
-  #handleStreamError(error: Error) {
+  #handleStreamError(error: Error, reason: StreamCloseReason = 'stream_error') {
     if (this.#isManualDisconnect) return;
+
+    this.#logStreamDiagnostic('SSE_STREAM_ERROR', reason, {
+      error_name: error.name,
+      error_message: error.message,
+    });
 
     this.#logger.exception(error, {
       action: 'SSE_ERROR',
       info: {
         traceId: this.#traceId!,
+        reason,
+        last_event_type: this.#lastEventType ?? undefined,
+      },
+      stats: {
+        stream_duration_ms: this.#streamDurationMs(),
+        since_last_event_ms: this.#sinceLastEventMs(),
+        event_count: this.#eventCount,
       },
     });
 
@@ -229,11 +350,11 @@ export class AiLib {
     this.#notifyError(apiError ?? error);
   }
 
-  #finishStream(shouldNotify = true) {
-    this.#closeStream({ notify: shouldNotify });
+  #finishStream(options: Omit<CloseStreamOptions, 'streamStatus'> = {}) {
+    this.#closeStream({ notify: options.notify, reason: options.reason });
   }
 
-  sendMessage(incomingOptions: SendMessageStreamOptions) {
+  #beginStream(streamOptions: ResolvedStreamOptions, logAction: string) {
     if (this.#streamPromise) {
       this.disconnect();
     }
@@ -242,15 +363,14 @@ export class AiLib {
     this.#traceId = uuid();
     this.#isManualDisconnect = false;
     this.#abortController = new AbortController();
-
-    const streamOptions = this.#resolveStreamOptions(incomingOptions);
+    this.#resetStreamMetrics(streamOptions.url);
 
     this.#logger.info({
-      action: 'SSE_START',
+      action: logAction,
       info: {
         traceId: this.#traceId!,
         url: streamOptions.url,
-        method: 'POST',
+        method: streamOptions.method,
         headers: JSON.stringify(streamOptions.headers),
         body: streamOptions.body,
       },
@@ -265,13 +385,23 @@ export class AiLib {
     this.#streamPromise = this.#startStream(streamOptions);
   }
 
+  sendMessage(incomingOptions: SendMessageStreamOptions) {
+    const streamOptions = this.#resolveStreamOptions(incomingOptions);
+    this.#beginStream(streamOptions, 'SSE_START');
+  }
+
+  connectSessionEvents(incomingOptions: ConnectSessionEventsOptions = {}) {
+    const streamOptions = this.#resolveSessionEventsOptions(incomingOptions);
+    this.#beginStream(streamOptions, 'SSE_SESSION_EVENTS_START');
+  }
+
   async #startStream(streamOptions: ResolvedStreamOptions) {
     const abortController = this.#abortController;
     if (!abortController) return;
 
     try {
       await fetchEventSource(streamOptions.url, {
-        method: 'POST',
+        method: streamOptions.method,
         headers: {
           ...streamOptions.headers,
           'x-trace-id': this.#traceId!,
@@ -282,13 +412,24 @@ export class AiLib {
         onopen: async (response) => {
           if (response.ok && response.headers.get('content-type')?.includes('text/event-stream')) {
             this.#connectingTimes++;
+            this.#openTime = Date.now();
             this.#setStreamStatus(StreamStatusEnum.OPEN);
             this.#setError(null);
+            this.#logStreamDiagnostic('SSE_OPEN', 'open', {
+              status: String(response.status),
+              content_type: response.headers.get('content-type') ?? undefined,
+            });
             this.#notifyOpen();
             return;
           }
 
           const errorData = await parseErrorResponse(response);
+          this.#logStreamDiagnostic('SSE_HTTP_ERROR', 'http_error', {
+            status: String(response.status),
+            status_text: response.statusText,
+            error: errorData.error,
+            message: errorData.message,
+          });
           throw createAPIExceptionFromResponse(response, response.url, errorData);
         },
         onmessage: (message) => {
@@ -300,15 +441,18 @@ export class AiLib {
           this.#handleSseEvent(parsed);
         },
         onclose: () => {
-          this.#finishStream(true);
+          this.#finishStream({ notify: true, reason: 'remote_close' });
         },
         onerror: (error) => {
           if (this.#isManualDisconnect) {
             throw error;
           }
 
-          this.#handleStreamError(normalizeRequestError(error, streamOptions.url, 'SSE stream failed'));
-          this.#finishStream(false);
+          this.#handleStreamError(
+            normalizeRequestError(error, streamOptions.url, 'SSE stream failed'),
+            'stream_error'
+          );
+          this.#finishStream({ notify: false, reason: 'stream_error' });
           throw error;
         },
       });
@@ -316,8 +460,11 @@ export class AiLib {
       if (this.#isManualDisconnect) return;
       if (error instanceof DOMException && error.name === 'AbortError') return;
 
-      this.#handleStreamError(normalizeRequestError(error, streamOptions.url, 'SSE stream failed'));
-      this.#finishStream(false);
+      this.#handleStreamError(
+        normalizeRequestError(error, streamOptions.url, 'SSE stream failed'),
+        'stream_error'
+      );
+      this.#finishStream({ notify: false, reason: 'stream_error' });
     }
   }
 
@@ -328,7 +475,8 @@ export class AiLib {
         traceId: this.#traceId!,
       },
     });
-    this.#closeStream();
+    this.#isManualDisconnect = true;
+    this.#closeStream({ reason: 'manual' });
   }
 
   destroy() {

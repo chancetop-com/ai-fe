@@ -9,6 +9,7 @@ import { ChatMessagesPanel } from './components/ChatMessagesPanel';
 import { ChatSessionsSidebar } from './components/ChatSessionsSidebar';
 import { MessageHost } from './components/MessageHost';
 import type { ArtifactSpec } from './components/artifactTypes';
+import { buildArtifactShareUrl } from './components/ArtifactDrawer';
 import { message } from './message';
 import { formatApiError } from './utils';
 import { UseAiChatOptions, useAiChat } from './useAiChat';
@@ -28,6 +29,8 @@ export interface AiChatProps extends UseAiChatOptions {
   showConnectionControls?: boolean;
   showSessionSidebar?: boolean;
   showAgentSelector?: boolean;
+  /** Build share link from `fileId`. Default: `{origin}/share?fileId=` */
+  buildShareUrl?: (fileId: string) => string;
   variables?: Record<string, string>;
   onSend?: (
     message: string,
@@ -90,6 +93,7 @@ export function AiChat({
   showConnectionControls = false,
   showSessionSidebar = true,
   showAgentSelector = true,
+  buildShareUrl = (fileId) => buildArtifactShareUrl(fileId, '/share'),
   variables,
   onSend,
   onApprove,
@@ -113,7 +117,7 @@ export function AiChat({
     chatSessionsLoadingMore,
     loadMoreChatSessions,
     activeSidebarSessionId,
-    disconnect,
+    stopStream,
     sendMessage,
     approveToolCall,
     cancelTurn,
@@ -211,9 +215,9 @@ export function AiChat({
 
   const isSessionRunning = chatState.sessionStatus === 'running';
 
-  const hasOpenStream = isLiveStreaming;
+  const isTurnActive = isLiveStreaming || isSessionRunning;
 
-  const canCancelTurn = isLiveStreaming || isSessionRunning;
+  const canCancelTurn = isTurnActive;
 
   const isThinking = chatState.isThinking;
 
@@ -380,7 +384,7 @@ export function AiChat({
                     Create Session
                   </button>
                 ) : null}
-                <button type="button" className="ai-chat-btn" disabled={!hasOpenStream} onClick={() => disconnect()}>
+                <button type="button" className="ai-chat-btn" disabled={!isTurnActive} onClick={() => stopStream()}>
                   Stop Stream
                 </button>
                 <button
@@ -406,7 +410,7 @@ export function AiChat({
 
         <ChatMessagesPanel
           messages={chatState.messages}
-          isStreaming={isLiveStreaming}
+          isStreaming={isTurnActive}
           isThinking={isThinking}
           planTodos={chatState.planTodos}
           title={selectedAgent?.name || title}
@@ -419,8 +423,14 @@ export function AiChat({
 
         <ChatComposer
           ref={composerRef}
-          disabled={chatState.streamStatus === StreamStatusEnum.ERROR || actionLoading || !selectedAgentId || !baseUrl}
-          isStreaming={isLiveStreaming}
+          disabled={
+            chatState.streamStatus === StreamStatusEnum.ERROR ||
+            actionLoading ||
+            !selectedAgentId ||
+            !baseUrl ||
+            isSessionRunning
+          }
+          isStreaming={isTurnActive}
           placeholder={selectedAgentId ? placeholder : 'Select an agent first'}
           messagesContainerRef={messagesContainerRef}
           blobApi={blobApi}
@@ -431,7 +441,12 @@ export function AiChat({
 
       {activeArtifact ? (
         <Suspense fallback={null}>
-          <ArtifactDrawer artifact={activeArtifact} fileApi={fileApi} onClose={() => setActiveArtifact(null)} />
+          <ArtifactDrawer
+            artifact={activeArtifact}
+            fileApi={fileApi}
+            buildShareUrl={buildShareUrl}
+            onClose={() => setActiveArtifact(null)}
+          />
         </Suspense>
       ) : null}
     </div>

@@ -16,7 +16,6 @@ import {
 import { useAgentSession, useAiLibSubscription } from '@connexup/ai-react';
 import {
   applyStreamState,
-  applyRunningSessionMessages,
   ChatState,
   createAgentPlaceholder,
   createUserMessage,
@@ -29,6 +28,7 @@ import { message } from './message';
 import { isSseUnauthorizedError } from './sse-auth';
 import {
   clearActiveAgentBubble,
+  ensureTrailingAgentBubble,
   mergeHistoryWithLive,
   resolveRestoredTurn,
 } from './stream-recovery';
@@ -66,11 +66,12 @@ function buildHydratedChatState(
   messages: ReturnType<typeof historyToChatMessages>,
   sessionStatus: SessionStatus | null
 ): ChatState {
+  const isRunning = sessionStatus === 'running';
   return {
     ...initialChatState,
-    messages: sessionStatus === 'running' ? applyRunningSessionMessages(messages) : messages,
+    messages: isRunning ? ensureTrailingAgentBubble(messages) : messages,
     sessionStatus,
-    streamStatus: sessionStatus === 'running' ? StreamStatusEnum.CONNECTING : StreamStatusEnum.IDLE,
+    streamStatus: isRunning ? StreamStatusEnum.CONNECTING : StreamStatusEnum.IDLE,
   };
 }
 
@@ -175,6 +176,13 @@ export function useAiChat(options: UseAiChatOptions) {
   const connectRunningSession = useCallback(
     (resolvedSessionId: string) => {
       localTurnActiveRef.current = false;
+      // Clear before replay so POST-streamed text is not duplicated by PUT event replay.
+      setChatState((prev) => ({
+        ...prev,
+        messages: clearActiveAgentBubble(prev.messages),
+        sessionStatus: 'running',
+        streamStatus: StreamStatusEnum.CONNECTING,
+      }));
       agentSession.connectSessionEvents(resolvedSessionId);
     },
     [agentSession]
@@ -330,6 +338,11 @@ export function useAiChat(options: UseAiChatOptions) {
         return;
       }
 
+      if (event.type === 'turn_complete') {
+        localTurnActiveRef.current = false;
+        clearTurnPending();
+      }
+
       setChatState((prev) => {
         let next = prev;
         if (event.type === 'status_change' && event.status === 'running') {
@@ -341,8 +354,6 @@ export function useAiChat(options: UseAiChatOptions) {
         return reduceChatState(next, event);
       });
       if (event.type === 'turn_complete') {
-        localTurnActiveRef.current = false;
-        clearTurnPending();
         const sid = event.sessionId ?? sessionIdRef.current;
         if (sid) {
           if (event.cancelled) {

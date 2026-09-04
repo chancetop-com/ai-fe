@@ -244,7 +244,7 @@ export function reduceChatState(state: ChatState, event: SseEvent): ChatState {
       messages[ensured.index] = {
         ...last,
         segments,
-        streaming: !event.is_final_chunk,
+        streaming: true,
         timestamp: event.timestamp,
       };
       break;

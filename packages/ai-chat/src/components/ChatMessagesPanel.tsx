@@ -43,7 +43,10 @@ export const ChatMessagesPanel = memo(function ChatMessagesPanel({
   const stickToBottomRef = useRef(true);
 
   const renderableMessages = useMemo(
-    () => messages.filter((message) => shouldRenderMessage(message, isStreaming)),
+    () =>
+      messages
+        .map((message, index) => ({ message, index }))
+        .filter(({ message, index }) => shouldRenderMessage(message, index, messages.length, isStreaming)),
     [messages, isStreaming]
   );
 
@@ -94,12 +97,10 @@ export const ChatMessagesPanel = memo(function ChatMessagesPanel({
     [onOpenArtifact]
   );
 
-  const lastStreamingKey = useMemo(() => {
-    if (!isStreaming) return null;
-    const last = messages[messages.length - 1];
-    if (last?.role !== 'assistant' || !last.streaming) return null;
-    return last.key ?? null;
-  }, [isStreaming, messages]);
+  const lastStreamingIndex = useMemo(() => {
+    if (!isStreaming) return -1;
+    return messages.length - 1;
+  }, [isStreaming, messages.length]);
 
   const handleMessagesScroll = useCallback(() => {
     const element = messagesContainerRef.current;
@@ -152,13 +153,15 @@ export const ChatMessagesPanel = memo(function ChatMessagesPanel({
             </button>
           ) : null}
 
-          {visibleMessages.map((message) => (
+          {visibleMessages.map(({ message, index }) => (
             <ChatMessageRow
               key={message.key}
               message={message}
-              isStreaming={isStreaming && message.key === lastStreamingKey}
+              isStreaming={isStreaming && index === lastStreamingIndex && message.role === 'assistant'}
               isThinking={isThinking}
-              planTodos={isStreaming && message.key === lastStreamingKey ? planTodos : null}
+              planTodos={
+                isStreaming && index === lastStreamingIndex && message.role === 'assistant' ? planTodos : null
+              }
               sessionArtifacts={sessionArtifacts}
               agentMarkdownComponents={message.role === 'assistant' ? agentMarkdownComponents : undefined}
               onOpenArtifact={onOpenArtifact}
@@ -183,13 +186,18 @@ export const ChatMessagesPanel = memo(function ChatMessagesPanel({
   );
 });
 
-function shouldRenderMessage(message: ChatMessage, isStreaming: boolean): boolean {
+function shouldRenderMessage(
+  message: ChatMessage,
+  index: number,
+  messagesLength: number,
+  isTurnActive: boolean
+): boolean {
   if (message.role === 'system') return true;
   if (message.role === 'user') {
     return message.segments.length > 0 || Boolean(message.metadata?.attachments?.length);
   }
   if (message.segments.length > 0) return true;
   if (message.approval) return true;
-  if (isStreaming && message.streaming) return true;
+  if (isTurnActive && message.role === 'assistant' && index === messagesLength - 1) return true;
   return false;
 }

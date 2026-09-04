@@ -23,6 +23,13 @@ export function mergeHistoryWithLive(hydrated: ChatMessage[], live: ChatMessage[
   return [...hydrated, createAgentPlaceholder()];
 }
 
+/** Give a resumed turn a bubble to stream into when the restored list ends with the user message. */
+export function ensureTrailingAgentBubble(messages: ChatMessage[]): ChatMessage[] {
+  const last = messages[messages.length - 1];
+  if (last?.role === 'assistant') return messages;
+  return [...messages, createAgentPlaceholder()];
+}
+
 export type RestoredTurnAction = 'resume' | 'resync' | 'none';
 
 export function resolveRestoredTurn(

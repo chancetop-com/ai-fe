@@ -138,7 +138,7 @@ export const ChatMessageRow = memo(function ChatMessageRow({
 
         {thinkingSeg ? (
           <div className="mb-3">
-            <ThinkingBlock thinking={thinkingSeg.content} isStreaming={isStreaming} />
+            <ThinkingBlock thinking={thinkingSeg.content} isStreaming={isStreaming && isThinking} />
           </div>
         ) : null}
 

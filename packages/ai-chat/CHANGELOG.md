@@ -1,5 +1,13 @@
 # @connexup/ai-chat
 
+## 1.1.10
+
+### Patch Changes
+
+- Fix duplicated streaming text when SSE reconnects replay turn events on top of POST-streamed content
+- Clear active agent bubble before `connectSessionEvents`; align hydration with core-ai `ensureTrailingAgentBubble`
+- Fix streaming UI: session-level last-message indicator, `ThinkingBlock` spinner, and `text_chunk` streaming lifecycle
+
 ## 1.1.9
 
 ### Patch Changes

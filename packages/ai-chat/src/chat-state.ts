@@ -170,6 +170,36 @@ export function getMessageText(message: ChatMessage): string {
     .join('\n\n');
 }
 
+/** Merge delta or cumulative SSE text chunks without duplicating replayed content. */
+export function mergeStreamingText(existing: string, chunk: string): string {
+  if (!chunk) return existing;
+  if (!existing) return chunk;
+  if (chunk === existing) return existing;
+  if (existing.startsWith(chunk)) return existing;
+  if (chunk.startsWith(existing)) return chunk;
+  if (existing.endsWith(chunk)) return existing;
+  if (chunk.endsWith(existing)) return chunk;
+
+  const maxOverlap = Math.min(existing.length, chunk.length);
+  for (let overlap = maxOverlap; overlap > 0; overlap -= 1) {
+    if (existing.endsWith(chunk.slice(0, overlap))) {
+      return existing + chunk.slice(overlap);
+    }
+  }
+
+  return existing + chunk;
+}
+
+function replaceOrAddTextSegment(segments: MessageSegment[], content: string): MessageSegment[] {
+  const textIdx = segments.findIndex((segment) => segment.type === 'text');
+  if (textIdx >= 0) {
+    const next = [...segments];
+    next[textIdx] = { type: 'text', content };
+    return next;
+  }
+  return [...segments, { type: 'text', content }];
+}
+
 export function createAgentPlaceholder(): ChatMessage {
   return {
     key: `agent-${Date.now()}`,
@@ -224,7 +254,7 @@ export function reduceChatState(state: ChatState, event: SseEvent): ChatState {
       if (lastSeg?.type === 'text') {
         segments[segments.length - 1] = {
           ...lastSeg,
-          content: lastSeg.content + chunk,
+          content: mergeStreamingText(lastSeg.content, chunk),
         };
       } else {
         const existingIdx = segments.findIndex((segment) => segment.type === 'text');
@@ -232,7 +262,7 @@ export function reduceChatState(state: ChatState, event: SseEvent): ChatState {
           const existing = segments[existingIdx] as TextSegment;
           const updated: TextSegment = {
             type: 'text',
-            content: `${existing.content}\n\n${chunk}`,
+            content: mergeStreamingText(existing.content, chunk),
           };
           segments.splice(existingIdx, 1);
           segments.push(updated);
@@ -269,7 +299,7 @@ export function reduceChatState(state: ChatState, event: SseEvent): ChatState {
       if (lastSeg?.type === 'thinking') {
         segments[segments.length - 1] = {
           ...lastSeg,
-          content: lastSeg.content + chunk,
+          content: mergeStreamingText(lastSeg.content, chunk),
         };
       } else {
         const existingIdx = segments.findIndex((segment) => segment.type === 'thinking');
@@ -277,7 +307,7 @@ export function reduceChatState(state: ChatState, event: SseEvent): ChatState {
           const existing = segments[existingIdx] as ThinkingSegment;
           segments[existingIdx] = {
             ...existing,
-            content: existing.content + chunk,
+            content: mergeStreamingText(existing.content, chunk),
           };
         } else {
           segments.push({ type: 'thinking', content: chunk });
@@ -450,8 +480,8 @@ export function reduceChatState(state: ChatState, event: SseEvent): ChatState {
         } else {
           const timestamp = event.timestamp || new Date().toISOString();
           const segments =
-            !event.cancelled && !hasTextSegment(last.segments) && event.output
-              ? [...last.segments, { type: 'text' as const, content: event.output }]
+            !event.cancelled && event.output
+              ? replaceOrAddTextSegment(last.segments, event.output)
               : last.segments;
           messages[messages.length - 1] = {
             ...last,

@@ -1,17 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ChevronDown, ChevronRight, Brain, Loader2 } from 'lucide-react';
 
 export interface ThinkingBlockProps {
   thinking: string;
+  /** Show reasoning-in-progress spinner (until reasoning_chunk is_final_chunk). */
   isStreaming: boolean;
 }
 
 export function ThinkingBlock({ thinking, isStreaming }: ThinkingBlockProps) {
-  const [expanded, setExpanded] = useState(isStreaming);
-
-  useEffect(() => {
-    setExpanded(isStreaming);
-  }, [isStreaming]);
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <div

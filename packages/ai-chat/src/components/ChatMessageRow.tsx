@@ -138,7 +138,10 @@ export const ChatMessageRow = memo(function ChatMessageRow({
 
         {thinkingSeg ? (
           <div className="mb-3">
-            <ThinkingBlock thinking={thinkingSeg.content} isStreaming={isStreaming && isThinking} />
+            <ThinkingBlock
+              thinking={thinkingSeg.content}
+              isStreaming={isStreaming && isThinking}
+            />
           </div>
         ) : null}
 
@@ -225,6 +228,8 @@ export const ChatMessageRow = memo(function ChatMessageRow({
                 }}
               >
                 {isUser ? (
+                  <div className="whitespace-pre-wrap">{textSeg.content}</div>
+                ) : isStreaming ? (
                   <div className="whitespace-pre-wrap">{textSeg.content}</div>
                 ) : (
                   <div className="ai-chat-markdown">

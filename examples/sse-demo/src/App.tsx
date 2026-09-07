@@ -2,7 +2,7 @@ import { AiChat } from '@connexup/ai-chat';
 import '@connexup/ai-chat/styles.css';
 
 const baseUrl = import.meta.env.VITE_BASE_URL;
-const apiKey = 'ctk_VHNmuif04nCZiJKu1UshB1075cM6RM6OsqlUklQ0kss';
+const apiKey = 'ctk_8sXtgIdf-qCGvsT_TjbZiIwOYDgZEi_rW8xuS0aYX0I';
 const accessAgents = [
   {
     id: '0e0102f4-e0cc-4d01-96b0-044cdef4ff8b',
@@ -475,6 +475,10 @@ function App() {
         loadHistoryOnConnect={Boolean(import.meta.env.VITE_SESSION_ID)}
         sessionId={import.meta.env.VITE_SESSION_ID}
         style={{ height: 'calc(100vh - 48px)' }}
+        variables={{
+          merchantId: '4ccdade0-dd69-4853-809f-2fd25ae65030',
+          merchantName: 'SEO Experience Hub',
+        }}
       />
     </div>
   );

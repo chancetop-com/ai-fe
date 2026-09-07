@@ -58,6 +58,7 @@ export class AiLib {
   #acceptEventTypes: SseEventType[] | null = null;
   #isManualDisconnect = false;
   #streamPromise: Promise<void> | null = null;
+  #streamGeneration = 0;
   #openTime: number | null = null;
   #lastEventTime: number | null = null;
   #lastEventType: string | null = null;
@@ -267,7 +268,7 @@ export class AiLib {
     this.#notifyMessage(event);
 
     if (isSseStatusChangeEvent(event) && event.status === 'error') {
-      this.#closeStream({
+      this.#teardownStream({
         streamStatus: StreamStatusEnum.ERROR,
         error: {
           errorCode: 'session_error',
@@ -278,7 +279,7 @@ export class AiLib {
     }
   }
 
-  #closeStream(options: CloseStreamOptions = {}) {
+  #teardownStream(options: CloseStreamOptions = {}) {
     const {
       streamStatus = StreamStatusEnum.CLOSED,
       error = null,
@@ -286,6 +287,7 @@ export class AiLib {
       reason = 'remote_close',
     } = options;
 
+    const hadActiveStream = this.#abortController !== null || this.#streamPromise !== null;
     const wasManualDisconnect = this.#isManualDisconnect || reason === 'manual';
     this.#isManualDisconnect = true;
 
@@ -295,6 +297,14 @@ export class AiLib {
     }
 
     this.#streamPromise = null;
+
+    if (!hadActiveStream) {
+      if (error) {
+        this.#setError(error);
+      }
+      return;
+    }
+
     this.#setStreamStatus(streamStatus);
     if (error) {
       this.#setError(error);
@@ -314,7 +324,7 @@ export class AiLib {
       error_message: error?.errorMessage ?? undefined,
     });
 
-    if (notify) {
+    if (notify && hadActiveStream) {
       this.#notifyDisconnect();
     }
   }
@@ -351,17 +361,17 @@ export class AiLib {
   }
 
   #finishStream(options: Omit<CloseStreamOptions, 'streamStatus'> = {}) {
-    this.#closeStream({ notify: options.notify, reason: options.reason });
+    this.#teardownStream({ notify: options.notify, reason: options.reason });
   }
 
   #beginStream(streamOptions: ResolvedStreamOptions, logAction: string) {
-    if (this.#streamPromise) {
-      this.disconnect();
-    }
+    // Always abort any in-flight fetch before opening a replacement (POST -> PUT recovery).
+    this.#teardownStream({ notify: false, reason: 'manual' });
 
     this.#startTime = Date.now();
     this.#traceId = uuid();
     this.#isManualDisconnect = false;
+    const streamGeneration = ++this.#streamGeneration;
     this.#abortController = new AbortController();
     this.#resetStreamMetrics(streamOptions.url);
 
@@ -382,7 +392,7 @@ export class AiLib {
     this.#setStreamStatus(StreamStatusEnum.CONNECTING);
     this.#setError(null);
 
-    this.#streamPromise = this.#startStream(streamOptions);
+    this.#streamPromise = this.#startStream(streamOptions, streamGeneration);
   }
 
   sendMessage(incomingOptions: SendMessageStreamOptions) {
@@ -395,9 +405,11 @@ export class AiLib {
     this.#beginStream(streamOptions, 'SSE_SESSION_EVENTS_START');
   }
 
-  async #startStream(streamOptions: ResolvedStreamOptions) {
+  async #startStream(streamOptions: ResolvedStreamOptions, streamGeneration: number) {
     const abortController = this.#abortController;
     if (!abortController) return;
+
+    const isCurrentStream = () => streamGeneration === this.#streamGeneration;
 
     try {
       await fetchEventSource(streamOptions.url, {
@@ -410,6 +422,8 @@ export class AiLib {
         signal: abortController.signal,
         openWhenHidden: true,
         onopen: async (response) => {
+          if (!isCurrentStream()) return;
+
           if (response.ok && response.headers.get('content-type')?.includes('text/event-stream')) {
             this.#connectingTimes++;
             this.#openTime = Date.now();
@@ -433,7 +447,7 @@ export class AiLib {
           throw createAPIExceptionFromResponse(response, response.url, errorData);
         },
         onmessage: (message) => {
-          if (!message.data) return;
+          if (!isCurrentStream() || !message.data) return;
 
           const parsed = safeParse<unknown>(message.data);
           if (!isSseEvent(parsed)) return;
@@ -441,10 +455,11 @@ export class AiLib {
           this.#handleSseEvent(parsed);
         },
         onclose: () => {
+          if (!isCurrentStream()) return;
           this.#finishStream({ notify: true, reason: 'remote_close' });
         },
         onerror: (error) => {
-          if (this.#isManualDisconnect) {
+          if (!isCurrentStream() || this.#isManualDisconnect) {
             throw error;
           }
 
@@ -457,6 +472,7 @@ export class AiLib {
         },
       });
     } catch (error) {
+      if (!isCurrentStream()) return;
       if (this.#isManualDisconnect) return;
       if (error instanceof DOMException && error.name === 'AbortError') return;
 
@@ -475,8 +491,7 @@ export class AiLib {
         traceId: this.#traceId!,
       },
     });
-    this.#isManualDisconnect = true;
-    this.#closeStream({ reason: 'manual' });
+    this.#teardownStream({ notify: true, reason: 'manual' });
   }
 
   destroy() {

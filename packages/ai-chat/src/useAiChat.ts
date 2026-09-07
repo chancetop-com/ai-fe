@@ -138,6 +138,8 @@ export function useAiChat(options: UseAiChatOptions) {
   const turnReconnectsRef = useRef(0);
   const suppressRecoverRef = useRef(false);
   const recoverTurnRef = useRef<(sid: string) => void>(() => {});
+  const replayArmRef = useRef(false);
+  const turnCompletedRef = useRef(false);
   const cancelledSessionIdsRef = useRef<Set<string>>(new Set());
   const refreshChatSessionsRef = useRef<(() => Promise<void>) | null>(null);
   const sessionIdRef = useRef<string | undefined>(
@@ -176,7 +178,12 @@ export function useAiChat(options: UseAiChatOptions) {
   const connectRunningSession = useCallback(
     (resolvedSessionId: string) => {
       localTurnActiveRef.current = false;
-      // Clear before replay so POST-streamed text is not duplicated by PUT event replay.
+      // Arm synchronous clear in appendEvent — setState alone races with immediate SSE replay.
+      replayArmRef.current = true;
+      // Abort any live POST stream before opening PUT /events (prevents dual SSE delivery).
+      suppressRecoverRef.current = true;
+      aiLib.disconnect();
+      suppressRecoverRef.current = false;
       setChatState((prev) => ({
         ...prev,
         messages: clearActiveAgentBubble(prev.messages),
@@ -185,7 +192,7 @@ export function useAiChat(options: UseAiChatOptions) {
       }));
       agentSession.connectSessionEvents(resolvedSessionId);
     },
-    [agentSession]
+    [agentSession, aiLib]
   );
 
   const recoverTurn = useCallback(
@@ -340,15 +347,23 @@ export function useAiChat(options: UseAiChatOptions) {
 
       if (event.type === 'turn_complete') {
         localTurnActiveRef.current = false;
+        turnCompletedRef.current = true;
         clearTurnPending();
       }
 
       setChatState((prev) => {
         let next = prev;
+        if (replayArmRef.current) {
+          replayArmRef.current = false;
+          const cleared = clearActiveAgentBubble(prev.messages);
+          if (cleared !== prev.messages) {
+            next = { ...prev, messages: cleared };
+          }
+        }
         if (event.type === 'status_change' && event.status === 'running') {
           const sid = pendingTurnRef.current;
           if (sid && (!event.sessionId || event.sessionId === sid)) {
-            next = { ...prev, messages: clearActiveAgentBubble(prev.messages) };
+            next = { ...next, messages: clearActiveAgentBubble(next.messages) };
           }
         }
         return reduceChatState(next, event);
@@ -385,6 +400,11 @@ export function useAiChat(options: UseAiChatOptions) {
         setChatState((prev) => applyStreamState(prev, StreamStatusEnum.CLOSED));
         return;
       }
+      if (turnCompletedRef.current) {
+        turnCompletedRef.current = false;
+        setChatState((prev) => applyStreamState(prev, StreamStatusEnum.CLOSED));
+        return;
+      }
       const sid = sessionIdRef.current;
       if (pendingTurnRef.current && sid && pendingTurnRef.current === sid) {
         recoverTurnRef.current(sid);
@@ -398,6 +418,9 @@ export function useAiChat(options: UseAiChatOptions) {
         const msg = error instanceof Error ? error.message : String(error);
         if (msg.includes('rejected') || msg.includes('401') || msg.includes('403')) {
           clearTurnPending();
+        } else if (!turnCompletedRef.current) {
+          recoverTurnRef.current(sid);
+          return;
         } else {
           setChatState((prev) => applyStreamState(prev, StreamStatusEnum.CLOSED));
           return;
@@ -722,6 +745,7 @@ export function useAiChat(options: UseAiChatOptions) {
         unauthorizedRetryAttempted: false,
       };
       localTurnActiveRef.current = true;
+      turnCompletedRef.current = false;
       markTurnPending(resolvedSessionId);
       sendUserMessage(trimmed, attachments);
       agentSession.sendMessage(trimmed, variables, attachments, resolvedSessionId);

@@ -1,5 +1,12 @@
 # @connexup/ai-api
 
+## 1.1.2
+
+### Patch Changes
+
+- Always abort in-flight SSE before opening a replacement stream (POST -> PUT recovery)
+- Ignore stale stream callbacks via generation guard to prevent duplicate event delivery
+
 ## 1.1.1
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @connexup/ai-chat
 
+## 1.1.11
+
+### Patch Changes
+
+- Fix duplicated streaming text and SSE replay race: `replayArmRef` synchronous bubble clear, `mergeStreamingText` with prefix/suffix overlap, fix `text_chunk` merge when text segment is not last
+- On `turn_complete`, replace agent text segment with authoritative `event.output`; render streaming replies as plain text, markdown after turn completes
+- Skip reconnect on stream close after `turn_complete`; force-disconnect live POST SSE before `connectSessionEvents` to avoid concurrent `stream` + `events` connections
+- Fix recovery suppress flag stuck after intentional POST teardown; recover turn on transient SSE errors, not only on disconnect
+- Collapse `ThinkingBlock` by default; remove auto-expand during streaming
+- Updated dependencies
+  - @connexup/ai-api@1.1.2
+
 ## 1.1.10
 
 ### Patch Changes

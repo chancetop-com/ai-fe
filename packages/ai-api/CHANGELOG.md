@@ -1,5 +1,12 @@
 # @connexup/ai-api
 
+## 1.1.3
+
+### Patch Changes
+
+- Enforce single SSE slot: `#beginStream` aborts any in-flight POST stream or PUT events before opening the next connection
+- Track `#inflightAbortController` and bump `#streamGeneration` on teardown to cancel in-flight fetch and ignore stale callbacks
+
 ## 1.1.2
 
 ### Patch Changes

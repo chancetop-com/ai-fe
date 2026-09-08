@@ -27,15 +27,16 @@ import { extractSessionArtifactsFromToolResult, mergeSessionArtifacts } from './
 import { message } from './message';
 import { isSseUnauthorizedError } from './sse-auth';
 import {
-  clearActiveAgentBubble,
   ensureTrailingAgentBubble,
-  mergeHistoryWithLive,
+  replaceTrailingAgentBubble,
   resolveRestoredTurn,
 } from './stream-recovery';
 import { formatApiError } from './utils';
 
-const TURN_WATCHDOG_INTERVAL_MS = 10_000;
-const MAX_TURN_RECONNECTS = 3;
+const STREAM_DISCONNECTED_ERROR = {
+  errorCode: 'connection_disconnected',
+  errorMessage: '连接已断开',
+} as const;
 
 export const DRAFT_CHAT_SESSION_ID = '__new_chat_draft__';
 export const CHAT_SESSIONS_PAGE_SIZE = 50;
@@ -134,12 +135,7 @@ export function useAiChat(options: UseAiChatOptions) {
   const pendingSendRef = useRef<PendingSendPayload | null>(null);
   const localTurnActiveRef = useRef(false);
   const pendingTurnRef = useRef<string | null>(null);
-  const [pendingTurnSid, setPendingTurnSid] = useState<string | null>(null);
-  const turnReconnectsRef = useRef(0);
-  const suppressRecoverRef = useRef(false);
-  const recoverTurnRef = useRef<(sid: string) => void>(() => {});
   const replayArmRef = useRef(false);
-  const turnCompletedRef = useRef(false);
   const cancelledSessionIdsRef = useRef<Set<string>>(new Set());
   const refreshChatSessionsRef = useRef<(() => Promise<void>) | null>(null);
   const sessionIdRef = useRef<string | undefined>(
@@ -155,6 +151,14 @@ export function useAiChat(options: UseAiChatOptions) {
       sessionId ?? (allowInitialSessionIdRef.current ? initialSessionId : undefined);
   }, [initialSessionId, sessionId]);
 
+  const fetchRestSessionStatus = useCallback(
+    async (sid: string): Promise<SessionStatus | null> => {
+      const res = await sessionApi.getStatus(sid).catch(() => null);
+      return res?.status ?? null;
+    },
+    [sessionApi]
+  );
+
   const assignSessionId = useCallback(
     (nextSessionId: string | undefined) => {
       sessionIdRef.current = nextSessionId;
@@ -163,119 +167,39 @@ export function useAiChat(options: UseAiChatOptions) {
     [setSessionId]
   );
 
-  const markTurnPending = useCallback((sid: string) => {
-    pendingTurnRef.current = sid;
-    setPendingTurnSid(sid);
-    turnReconnectsRef.current = 0;
-  }, []);
-
   const clearTurnPending = useCallback(() => {
     pendingTurnRef.current = null;
-    setPendingTurnSid(null);
-    turnReconnectsRef.current = 0;
   }, []);
 
+  /** PUT /events — only after REST getStatus returns running on page hydrate or session switch. */
   const connectRunningSession = useCallback(
     (resolvedSessionId: string) => {
       localTurnActiveRef.current = false;
-      // Arm synchronous clear in appendEvent — setState alone races with immediate SSE replay.
       replayArmRef.current = true;
-      // Abort any live POST stream before opening PUT /events (prevents dual SSE delivery).
-      suppressRecoverRef.current = true;
-      aiLib.disconnect();
-      suppressRecoverRef.current = false;
       setChatState((prev) => ({
         ...prev,
-        messages: clearActiveAgentBubble(prev.messages),
         sessionStatus: 'running',
         streamStatus: StreamStatusEnum.CONNECTING,
       }));
+      // AiLib enforces a single SSE connection; beginStream aborts any live POST stream first.
       agentSession.connectSessionEvents(resolvedSessionId);
     },
-    [agentSession, aiLib]
-  );
-
-  const recoverTurn = useCallback(
-    (sid: string) => {
-      if (suppressRecoverRef.current) return;
-      if (sessionIdRef.current !== sid) return;
-      if (pendingTurnRef.current !== sid) return;
-      if (turnReconnectsRef.current >= MAX_TURN_RECONNECTS) return;
-      turnReconnectsRef.current += 1;
-      setChatState((prev) => ({
-        ...prev,
-        sessionStatus: 'running',
-        streamStatus: StreamStatusEnum.CONNECTING,
-      }));
-      connectRunningSession(sid);
-    },
-    [connectRunningSession]
-  );
-
-  useEffect(() => {
-    recoverTurnRef.current = recoverTurn;
-  }, [recoverTurn]);
-
-  const syncFromHistory = useCallback(
-    async (sid: string) => {
-      try {
-        const history = await sessionApi.getHistory(sid);
-        if (sessionIdRef.current !== sid) return false;
-
-        const hydrated = historyToChatMessages(history.messages);
-        setChatState((prev) => ({
-          ...prev,
-          messages: mergeHistoryWithLive(hydrated, prev.messages),
-          sessionStatus: 'idle',
-          streamStatus: StreamStatusEnum.CLOSED,
-          isThinking: false,
-          planTodos: null,
-        }));
-        setSessionArtifacts(history.artifacts ?? []);
-        clearTurnPending();
-        return true;
-      } catch (error) {
-        console.warn('failed to sync history after stream loss', error);
-        return false;
-      }
-    },
-    [clearTurnPending, sessionApi]
+    [agentSession]
   );
 
   const applyRestoredTurn = useCallback(
     (
       sid: string,
       sessionStatus: SessionStatus | null,
-      messages: ReturnType<typeof historyToChatMessages>,
       locallyCancelled: boolean
     ) => {
-      const action = resolveRestoredTurn(sessionStatus, messages, locallyCancelled);
-      if (action === 'resume') {
-        markTurnPending(sid);
+      if (resolveRestoredTurn(sessionStatus, locallyCancelled) === 'resume') {
+        pendingTurnRef.current = sid;
         connectRunningSession(sid);
-      } else if (action === 'resync') {
-        void syncFromHistory(sid);
       }
     },
-    [connectRunningSession, markTurnPending, syncFromHistory]
+    [connectRunningSession]
   );
-
-  const replaceAgentPlaceholder = useCallback(() => {
-    setChatState((prev) => {
-      const messages = [...prev.messages];
-      const lastIndex = messages.length - 1;
-      if (lastIndex >= 0 && messages[lastIndex]?.role === 'assistant') {
-        messages[lastIndex] = createAgentPlaceholder();
-      }
-      return {
-        ...prev,
-        messages,
-        streamStatus: StreamStatusEnum.CONNECTING,
-        error: null,
-        isThinking: false,
-      };
-    });
-  }, []);
 
   const retrySendAfterUnauthorized = useCallback(async () => {
     const pending = pendingSendRef.current;
@@ -289,9 +213,12 @@ export function useAiChat(options: UseAiChatOptions) {
     try {
       const nextApiKey = await refresh();
       setApiKey(nextApiKey);
-      suppressRecoverRef.current = true;
-      aiLib.disconnect();
-      replaceAgentPlaceholder();
+      replayArmRef.current = true;
+      setChatState((prev) => ({
+        ...prev,
+        sessionStatus: 'running',
+        streamStatus: StreamStatusEnum.CONNECTING,
+      }));
       agentSession.sendMessage(
         pending.content,
         pending.variables,
@@ -305,7 +232,7 @@ export function useAiChat(options: UseAiChatOptions) {
       message.error(formatApiError(error, 'Failed to refresh authorization'));
       return false;
     }
-  }, [agentSession, aiLib, replaceAgentPlaceholder, setApiKey]);
+  }, [agentSession, setApiKey]);
 
   const appendEvent = useCallback(
     (event: SseEvent) => {
@@ -347,23 +274,17 @@ export function useAiChat(options: UseAiChatOptions) {
 
       if (event.type === 'turn_complete') {
         localTurnActiveRef.current = false;
-        turnCompletedRef.current = true;
         clearTurnPending();
+        pendingSendRef.current = null;
       }
 
       setChatState((prev) => {
         let next = prev;
         if (replayArmRef.current) {
           replayArmRef.current = false;
-          const cleared = clearActiveAgentBubble(prev.messages);
+          const cleared = replaceTrailingAgentBubble(prev.messages);
           if (cleared !== prev.messages) {
             next = { ...prev, messages: cleared };
-          }
-        }
-        if (event.type === 'status_change' && event.status === 'running') {
-          const sid = pendingTurnRef.current;
-          if (sid && (!event.sessionId || event.sessionId === sid)) {
-            next = { ...next, messages: clearActiveAgentBubble(next.messages) };
           }
         }
         return reduceChatState(next, event);
@@ -377,6 +298,8 @@ export function useAiChat(options: UseAiChatOptions) {
             cancelledSessionIdsRef.current.delete(sid);
           }
         }
+        // Close SSE promptly; local sessionStatus is already idle via reduceChatState.
+        aiLib.disconnect();
         void refreshChatSessionsRef.current?.();
       }
       if (event.type === 'tool_result' && event.tool_name === 'submit_artifacts' && event.result) {
@@ -386,7 +309,7 @@ export function useAiChat(options: UseAiChatOptions) {
         }
       }
     },
-    [clearTurnPending, retrySendAfterUnauthorized]
+    [clearTurnPending, retrySendAfterUnauthorized, aiLib]
   );
 
   useAiLibSubscription(aiLib, {
@@ -395,19 +318,11 @@ export function useAiChat(options: UseAiChatOptions) {
       setChatState((prev) => applyStreamState(prev, StreamStatusEnum.OPEN));
     },
     onDisconnect: () => {
-      if (suppressRecoverRef.current) {
-        suppressRecoverRef.current = false;
-        setChatState((prev) => applyStreamState(prev, StreamStatusEnum.CLOSED));
-        return;
-      }
-      if (turnCompletedRef.current) {
-        turnCompletedRef.current = false;
-        setChatState((prev) => applyStreamState(prev, StreamStatusEnum.CLOSED));
-        return;
-      }
       const sid = sessionIdRef.current;
       if (pendingTurnRef.current && sid && pendingTurnRef.current === sid) {
-        recoverTurnRef.current(sid);
+        setChatState((prev) =>
+          applyStreamState(prev, StreamStatusEnum.ERROR, STREAM_DISCONNECTED_ERROR)
+        );
         return;
       }
       setChatState((prev) => applyStreamState(prev, StreamStatusEnum.CLOSED));
@@ -418,13 +333,8 @@ export function useAiChat(options: UseAiChatOptions) {
         const msg = error instanceof Error ? error.message : String(error);
         if (msg.includes('rejected') || msg.includes('401') || msg.includes('403')) {
           clearTurnPending();
-        } else if (!turnCompletedRef.current) {
-          recoverTurnRef.current(sid);
-          return;
-        } else {
-          setChatState((prev) => applyStreamState(prev, StreamStatusEnum.CLOSED));
-          return;
         }
+        return;
       }
       setChatState((prev) =>
         applyStreamState(prev, StreamStatusEnum.ERROR, {
@@ -445,7 +355,8 @@ export function useAiChat(options: UseAiChatOptions) {
   );
 
   const prepareSession = useCallback(
-    async (request?: CreateSessionRequest) => {
+    async (request?: CreateSessionRequest, options?: { hydrate?: boolean }) => {
+      const hydrate = options?.hydrate ?? true;
       let resolvedSessionId =
         sessionId ?? (allowInitialSessionIdRef.current ? initialSessionId : undefined);
 
@@ -461,17 +372,14 @@ export function useAiChat(options: UseAiChatOptions) {
 
       allowInitialSessionIdRef.current = false;
 
-      if (loadHistoryOnConnect) {
-        const [history, status] = await Promise.all([
-          sessionApi.getHistory(resolvedSessionId),
-          sessionApi.getStatus(resolvedSessionId).catch(() => null),
-        ]);
-        const sessionStatus = status?.status ?? null;
+      if (hydrate && loadHistoryOnConnect) {
+        const history = await sessionApi.getHistory(resolvedSessionId);
+        const sessionStatus = await fetchRestSessionStatus(resolvedSessionId);
         const messages = historyToChatMessages(history.messages);
         const locallyCancelled = cancelledSessionIdsRef.current.has(resolvedSessionId);
         setChatState(buildHydratedChatState(messages, locallyCancelled && sessionStatus === 'running' ? 'idle' : sessionStatus));
         setSessionArtifacts(history.artifacts ?? []);
-        applyRestoredTurn(resolvedSessionId, sessionStatus, messages, locallyCancelled);
+        applyRestoredTurn(resolvedSessionId, sessionStatus, locallyCancelled);
       }
 
       assignSessionId(resolvedSessionId);
@@ -479,7 +387,6 @@ export function useAiChat(options: UseAiChatOptions) {
     },
     [
       agentSession,
-      autoCreateSession,
       assignSessionId,
       buildCreateSessionRequest,
       initialSessionId,
@@ -487,6 +394,7 @@ export function useAiChat(options: UseAiChatOptions) {
       sessionApi,
       sessionId,
       applyRestoredTurn,
+      fetchRestSessionStatus,
     ]
   );
 
@@ -495,7 +403,6 @@ export function useAiChat(options: UseAiChatOptions) {
   }, [aiLib]);
 
   const stopStream = useCallback(() => {
-    suppressRecoverRef.current = true;
     clearTurnPending();
     aiLib.disconnect();
     setChatState((prev) => applyStreamState(prev, StreamStatusEnum.CLOSED));
@@ -530,7 +437,6 @@ export function useAiChat(options: UseAiChatOptions) {
       const hydrateSeq = ++hydrateRequestSeqRef.current;
       const isCurrentHydration = () => hydrateSeq === hydrateRequestSeqRef.current;
 
-      suppressRecoverRef.current = true;
       resetChatState();
       disconnect();
       setDraftSession(null);
@@ -541,28 +447,27 @@ export function useAiChat(options: UseAiChatOptions) {
       }
 
       try {
-        const [history, status] = await Promise.all([
-          sessionApi.getHistory(session.id),
-          sessionApi.getStatus(session.id).catch(() => null),
-        ]);
+        const history = await sessionApi.getHistory(session.id);
+        if (!isCurrentHydration()) return;
+
+        const rawStatus = await fetchRestSessionStatus(session.id);
         if (!isCurrentHydration()) return;
 
         const locallyCancelled = cancelledSessionIdsRef.current.has(session.id);
-        const rawStatus = status?.status ?? null;
         const sessionStatus =
           locallyCancelled && rawStatus === 'running' ? ('idle' as const) : rawStatus;
         const messages = historyToChatMessages(history.messages);
 
         setChatState(buildHydratedChatState(messages, sessionStatus));
         setSessionArtifacts(history.artifacts ?? []);
-        applyRestoredTurn(session.id, rawStatus, messages, locallyCancelled);
+        applyRestoredTurn(session.id, rawStatus, locallyCancelled);
       } catch (error) {
         if (!isCurrentHydration()) return;
         console.warn('failed to hydrate session history', error);
         message.error(formatApiError(error, 'Failed to load conversation'));
       }
     },
-    [applyRestoredTurn, assignSessionId, disconnect, resetChatState, sessionApi]
+    [applyRestoredTurn, assignSessionId, disconnect, fetchRestSessionStatus, resetChatState, sessionApi]
   );
 
   const fetchChatSessions = useCallback(
@@ -645,7 +550,6 @@ export function useAiChat(options: UseAiChatOptions) {
     hydrateRequestSeqRef.current += 1;
     allowInitialSessionIdRef.current = false;
     localTurnActiveRef.current = false;
-    suppressRecoverRef.current = true;
     resetChatState();
     disconnect();
     assignSessionId(undefined);
@@ -681,7 +585,6 @@ export function useAiChat(options: UseAiChatOptions) {
       const selectSeq = hydrateRequestSeqRef.current;
 
       allowInitialSessionIdRef.current = false;
-      suppressRecoverRef.current = true;
       resetChatState();
       disconnect();
       assignSessionId(undefined);
@@ -728,14 +631,17 @@ export function useAiChat(options: UseAiChatOptions) {
       const hasAttachments = Boolean(attachments?.length);
       if (!trimmed && !hasAttachments) return;
 
-      if (sessionStatusRef.current === 'running' && !localTurnActiveRef.current) {
+      if (
+        (sessionStatusRef.current === 'running' || pendingTurnRef.current) &&
+        !localTurnActiveRef.current
+      ) {
         message.warning('Session is still running. Cancel the current turn before sending a new message.');
         return;
       }
 
       const hadSession = Boolean(sessionId ?? (allowInitialSessionIdRef.current ? initialSessionId : undefined));
       const activeDraftSession = draftSession;
-      const resolvedSessionId = await prepareSession();
+      const resolvedSessionId = await prepareSession(undefined, { hydrate: false });
       cancelledSessionIdsRef.current.delete(resolvedSessionId);
       pendingSendRef.current = {
         content: trimmed,
@@ -745,8 +651,7 @@ export function useAiChat(options: UseAiChatOptions) {
         unauthorizedRetryAttempted: false,
       };
       localTurnActiveRef.current = true;
-      turnCompletedRef.current = false;
-      markTurnPending(resolvedSessionId);
+      pendingTurnRef.current = resolvedSessionId;
       sendUserMessage(trimmed, attachments);
       agentSession.sendMessage(trimmed, variables, attachments, resolvedSessionId);
 
@@ -761,7 +666,6 @@ export function useAiChat(options: UseAiChatOptions) {
       agentSession,
       draftSession,
       initialSessionId,
-      markTurnPending,
       prependChatSession,
       prepareSession,
       selectedAgentId,
@@ -824,76 +728,6 @@ export function useAiChat(options: UseAiChatOptions) {
   ]);
 
   useEffect(() => {
-    if (!pendingTurnSid) return;
-
-    let stopped = false;
-    let timer: number | undefined;
-    let failures = 0;
-    let nonRunningPolls = 0;
-
-    const poll = async () => {
-      try {
-        const res = await sessionApi.getStatus(pendingTurnSid);
-        if (stopped) return;
-        failures = 0;
-
-        if (res.status === 'running') {
-          nonRunningPolls = 0;
-        } else if (nonRunningPolls < 1) {
-          nonRunningPolls += 1;
-        } else if (res.status === 'error') {
-          await syncFromHistory(pendingTurnSid);
-          setChatState((prev) => {
-            const last = prev.messages[prev.messages.length - 1];
-            if (last?.role === 'assistant' && last.segments.length === 0) {
-              const messages = [...prev.messages];
-              messages[messages.length - 1] = {
-                ...last,
-                segments: [
-                  {
-                    type: 'text',
-                    content: 'Error: turn failed without a streamed error event',
-                  },
-                ],
-                streaming: false,
-              };
-              return { ...prev, messages };
-            }
-            return prev;
-          });
-          return;
-        } else {
-          await syncFromHistory(pendingTurnSid);
-          return;
-        }
-      } catch (error) {
-        failures += 1;
-        if (failures >= 5) {
-          console.warn('status watchdog gave up', error);
-          clearTurnPending();
-          setChatState((prev) => ({
-            ...prev,
-            sessionStatus: 'idle',
-            streamStatus: StreamStatusEnum.CLOSED,
-            isThinking: false,
-          }));
-          return;
-        }
-      }
-
-      if (!stopped) {
-        timer = window.setTimeout(poll, TURN_WATCHDOG_INTERVAL_MS);
-      }
-    };
-
-    timer = window.setTimeout(poll, TURN_WATCHDOG_INTERVAL_MS);
-    return () => {
-      stopped = true;
-      if (timer) window.clearTimeout(timer);
-    };
-  }, [clearTurnPending, pendingTurnSid, sessionApi, syncFromHistory]);
-
-  useEffect(() => {
     if (autoCreateSession || loadHistoryOnConnect) {
       sessionBootstrappedRef.current = true;
       void prepareSession().catch(() => undefined);
@@ -937,9 +771,9 @@ export function useAiChat(options: UseAiChatOptions) {
     // Cancel is async server-side; status may stay "running" briefly after 204.
     // Mirror core-ai: treat the turn as stopped locally and ignore stale SSE/status.
     cancelledSessionIdsRef.current.add(resolvedSessionId);
-    suppressRecoverRef.current = true;
     clearTurnPending();
     localTurnActiveRef.current = false;
+    pendingSendRef.current = null;
     aiLib.disconnect();
 
     setChatState((prev) => {
@@ -977,8 +811,8 @@ export function useAiChat(options: UseAiChatOptions) {
 
     if (chatState.sessionStatus === 'running') {
       cancelledSessionIdsRef.current.add(resolvedSessionId);
-      suppressRecoverRef.current = true;
       clearTurnPending();
+      pendingSendRef.current = null;
       try {
         await sessionApi.cancelTurn(resolvedSessionId);
       } catch (error) {

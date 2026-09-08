@@ -2,7 +2,7 @@ import { AiChat } from '@connexup/ai-chat';
 import '@connexup/ai-chat/styles.css';
 
 const baseUrl = import.meta.env.VITE_BASE_URL;
-const apiKey = 'ctk_8sXtgIdf-qCGvsT_TjbZiIwOYDgZEi_rW8xuS0aYX0I';
+const apiKey = 'ctk_5y_KkaywWpcPoQvRlZyd6sG50clQ1d5yijj3TTqBiW8';
 const accessAgents = [
   {
     id: '0e0102f4-e0cc-4d01-96b0-044cdef4ff8b',

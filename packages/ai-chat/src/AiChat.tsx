@@ -4,6 +4,7 @@ import { StreamStatusEnum } from '@connexup/ai-api';
 import { useAgentApi, useBlobApi, useFileApi } from '@connexup/ai-react';
 import { toSendMessageAttachments } from './attachment-utils';
 import { AgentSelector } from './components/AgentSelector';
+import { ErrorBlock } from './components/ErrorBlock';
 import { ChatComposer, type ChatComposerHandle, type ComposerAttachment } from './components/ChatComposer';
 import { ChatMessagesPanel } from './components/ChatMessagesPanel';
 import { ChatSessionsSidebar } from './components/ChatSessionsSidebar';
@@ -420,6 +421,17 @@ export function AiChat({
           onApprove={(callId, approved) => void handleApprove(callId, approved)}
           onOpenArtifact={openArtifact}
         />
+
+        {chatState.error ? (
+          <div className="px-4 pb-2">
+            <ErrorBlock
+              message={chatState.error.errorMessage ?? '连接已断开'}
+              errorCode={
+                chatState.error.errorCode != null ? String(chatState.error.errorCode) : undefined
+              }
+            />
+          </div>
+        ) : null}
 
         <ChatComposer
           ref={composerRef}

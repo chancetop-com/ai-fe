@@ -5,12 +5,15 @@
 ### Patch Changes
 
 - Fix duplicated streaming text and SSE replay race: `replayArmRef` synchronous bubble clear, `mergeStreamingText` with prefix/suffix overlap, fix `text_chunk` merge when text segment is not last
-- On `turn_complete`, replace agent text segment with authoritative `event.output`; render streaming replies as plain text, markdown after turn completes
-- Skip reconnect on stream close after `turn_complete`; force-disconnect live POST SSE before `connectSessionEvents` to avoid concurrent `stream` + `events` connections
-- Fix recovery suppress flag stuck after intentional POST teardown; recover turn on transient SSE errors, not only on disconnect
+- On `turn_complete`, replace agent text segment with authoritative `event.output`; render streaming replies as plain text, markdown after turn completes; set `sessionStatus: idle`, close SSE
+- Remove mid-turn auto reconnect; on unexpected SSE disconnect show `连接已断开` and resume only via page refresh (hydrate PUT `events`)
+- REST `getStatus` only on page hydrate and session switch; if `running`, open PUT `events` once via `applyRestoredTurn`
+- Otherwise use POST `stream` and local SSE `sessionStatus`; never open PUT `events` on send
+- Do not hydrate/resume PUT on `sendMessage` (`prepareSession({ hydrate: false })`)
+- Show `connection_disconnected` banner on unexpected mid-turn SSE loss; drop unused recover helpers and resync path
 - Collapse `ThinkingBlock` by default; remove auto-expand during streaming
 - Updated dependencies
-  - @connexup/ai-api@1.1.2
+  - @connexup/ai-api@1.1.3
 
 ## 1.1.10
 

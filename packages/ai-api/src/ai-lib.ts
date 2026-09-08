@@ -59,6 +59,8 @@ export class AiLib {
   #isManualDisconnect = false;
   #streamPromise: Promise<void> | null = null;
   #streamGeneration = 0;
+  /** Keeps aborting the in-flight fetch until its promise settles (controller may already be nulled). */
+  #inflightAbortController: AbortController | null = null;
   #openTime: number | null = null;
   #lastEventTime: number | null = null;
   #lastEventType: string | null = null;
@@ -295,6 +297,10 @@ export class AiLib {
       this.#abortController.abort();
       this.#abortController = null;
     }
+    if (this.#inflightAbortController) {
+      this.#inflightAbortController.abort();
+      this.#inflightAbortController = null;
+    }
 
     this.#streamPromise = null;
 
@@ -304,6 +310,8 @@ export class AiLib {
       }
       return;
     }
+
+    this.#streamGeneration += 1;
 
     this.#setStreamStatus(streamStatus);
     if (error) {
@@ -365,14 +373,17 @@ export class AiLib {
   }
 
   #beginStream(streamOptions: ResolvedStreamOptions, logAction: string) {
-    // Always abort any in-flight fetch before opening a replacement (POST -> PUT recovery).
+    // Single SSE slot: abort any in-flight POST stream or PUT events before opening the next one.
+    const hadActiveStream = this.#abortController !== null || this.#streamPromise !== null;
     this.#teardownStream({ notify: false, reason: 'manual' });
 
     this.#startTime = Date.now();
     this.#traceId = uuid();
     this.#isManualDisconnect = false;
-    const streamGeneration = ++this.#streamGeneration;
-    this.#abortController = new AbortController();
+    const streamGeneration = hadActiveStream ? this.#streamGeneration : ++this.#streamGeneration;
+    const abortController = new AbortController();
+    this.#abortController = abortController;
+    this.#inflightAbortController = abortController;
     this.#resetStreamMetrics(streamOptions.url);
 
     this.#logger.info({
@@ -481,6 +492,10 @@ export class AiLib {
         'stream_error'
       );
       this.#finishStream({ notify: false, reason: 'stream_error' });
+    } finally {
+      if (this.#inflightAbortController === abortController) {
+        this.#inflightAbortController = null;
+      }
     }
   }
 

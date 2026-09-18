@@ -1,5 +1,12 @@
 # @connexup/ai-chat
 
+## 1.1.13
+
+### Patch Changes
+
+- Linkify bare `http(s)` URLs and parenthetical URLs in agent markdown without swallowing CJK or full-width punctuation after the URL
+- Apply `prepareAgentMarkdown` when hydrating assistant history so past replies render clickable links
+
 ## 1.1.12
 
 ### Patch Changes

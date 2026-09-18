@@ -2,6 +2,7 @@ import { SessionHistoryMessage, SessionStatus, SseEvent, TodoStatus, SendMessage
 import { StreamStatusEnum } from '@connexup/ai-api';
 import type { AiLibError } from '@connexup/ai-api';
 import { parseHistoryMessageContent } from './history-content';
+import { prepareAgentMarkdown } from './markdown-content';
 
 export interface ToolEvent {
   type: 'start' | 'result';
@@ -698,10 +699,12 @@ export function historyToChatMessages(history: SessionHistoryMessage[]): ChatMes
       };
     }
 
+    const textContent = item.content ? prepareAgentMarkdown(item.content) : undefined;
+
     return {
       key: `history-${item.seq ?? index}-${item.timestamp ?? index}`,
       role,
-      segments: buildHistorySegments(item),
+      segments: buildHistorySegments(item, textContent),
       timestamp: item.timestamp,
     };
   });

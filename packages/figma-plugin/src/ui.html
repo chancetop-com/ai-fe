@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, sans-serif;
+        font-size: 12px;
+        color: var(--figma-color-text);
+        background: var(--figma-color-bg);
+      }
+      .wrap {
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        height: 100vh;
+      }
+      h1 {
+        font-size: 13px;
+        font-weight: 600;
+        margin: 0;
+      }
+      .hint {
+        color: var(--figma-color-text-secondary);
+        line-height: 1.4;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      label {
+        color: var(--figma-color-text-secondary);
+      }
+      select,
+      button {
+        font: inherit;
+      }
+      select {
+        flex: 1;
+        padding: 6px 8px;
+        border: 1px solid var(--figma-color-border);
+        border-radius: 4px;
+        background: var(--figma-color-bg);
+        color: var(--figma-color-text);
+      }
+      button {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        background: var(--figma-color-bg-brand);
+        color: var(--figma-color-text-onbrand);
+        cursor: pointer;
+      }
+      button.secondary {
+        background: var(--figma-color-bg-secondary);
+        color: var(--figma-color-text);
+      }
+      textarea {
+        flex: 1;
+        min-height: 320px;
+        width: 100%;
+        padding: 8px;
+        border: 1px solid var(--figma-color-border);
+        border-radius: 4px;
+        background: var(--figma-color-bg-secondary);
+        color: var(--figma-color-text);
+        font-family: ui-monospace, monospace;
+        font-size: 11px;
+        resize: none;
+      }
+      .meta {
+        font-size: 11px;
+        color: var(--figma-color-text-secondary);
+      }
+      .error {
+        color: var(--figma-color-text-danger);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Connex → code</h1>
+      <p class="hint">
+        选中 Admin Portal 中的 Frame，按 Figma 组件命名规范（如 <code>Button/Primary</code>）导出。
+        antd 目标用 Flex 组件；Tailwind 目标用 <code>div</code> + utility class。
+      </p>
+      <div class="row">
+        <label for="stack">栈</label>
+        <select id="stack">
+          <option value="antd">antd（Flex + 组件）</option>
+          <option value="tailwind">Tailwind（div + class）</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="format">输出</label>
+        <select id="format">
+          <option value="react">React</option>
+          <option value="html">HTML + CSS</option>
+        </select>
+        <button id="export">导出</button>
+        <button id="copy" class="secondary" disabled>复制</button>
+      </div>
+      <div id="meta" class="meta"></div>
+      <div id="error" class="error" hidden></div>
+      <textarea id="output" readonly placeholder="导出结果将显示在这里…"></textarea>
+    </div>
+    <!-- UI_SCRIPT -->
+  </body>
+</html>

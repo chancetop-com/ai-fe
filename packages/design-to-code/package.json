@@ -1,0 +1,28 @@
+{
+  "name": "@connexup/design-to-code",
+  "version": "0.1.0",
+  "description": "Design IR, antd mapping, and React/HTML code generation",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "build": "pnpm run clean && tsup src/index.ts --format cjs,esm --dts",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "generate:sample": "tsx src/cli/generate-sample.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "private": true,
+  "devDependencies": {
+    "tsup": "^8.0.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

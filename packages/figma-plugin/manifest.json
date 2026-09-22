@@ -1,0 +1,12 @@
+{
+  "name": "Connex Design to Code",
+  "id": "connex-design-to-code",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "editorType": ["figma", "dev"],
+  "capabilities": ["inspect"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"]
+  }
+}

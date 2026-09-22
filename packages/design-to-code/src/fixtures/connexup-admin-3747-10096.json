@@ -1,0 +1,130 @@
+{
+  "version": 1,
+  "stack": "antd",
+  "meta": {
+    "name": "Admin Portal Page",
+    "figmaFileKey": "bXm7dRd8TmCl94bBJTWj1B",
+    "figmaNodeId": "3747:10096",
+    "width": 1440,
+    "height": 900
+  },
+  "root": {
+    "id": "3747:10096",
+    "name": "Admin Portal Page",
+    "type": "frame",
+    "layout": {
+      "mode": "flex",
+      "direction": "column",
+      "gap": 24,
+      "padding": { "top": 24, "right": 24, "bottom": 24, "left": 24 },
+      "className": "flex flex-col gap-6 p-6"
+    },
+    "children": [
+      {
+        "id": "header",
+        "name": "Page Header",
+        "type": "frame",
+        "layout": {
+          "mode": "flex",
+          "direction": "row",
+          "justifyContent": "SPACE_BETWEEN",
+          "alignItems": "CENTER",
+          "className": "flex flex-row justify-between items-center"
+        },
+        "children": [
+          {
+            "id": "title",
+            "name": "Typography/Title",
+            "type": "instance",
+            "mainComponentName": "Typography/Title",
+            "text": {
+              "characters": "Users",
+              "fontSize": 20,
+              "fontWeight": 600
+            }
+          },
+          {
+            "id": "actions",
+            "name": "Actions",
+            "type": "frame",
+            "layout": {
+              "mode": "flex",
+              "direction": "row",
+              "gap": 12,
+              "className": "flex flex-row gap-3"
+            },
+            "children": [
+              {
+                "id": "btn-export",
+                "name": "Button/Default",
+                "type": "instance",
+                "mainComponentName": "Button/Default",
+                "children": [
+                  {
+                    "id": "btn-export-text",
+                    "name": "Label",
+                    "type": "text",
+                    "text": { "characters": "Export" }
+                  }
+                ]
+              },
+              {
+                "id": "btn-create",
+                "name": "Button/Primary",
+                "type": "instance",
+                "mainComponentName": "Button/Primary",
+                "children": [
+                  {
+                    "id": "btn-create-text",
+                    "name": "Label",
+                    "type": "text",
+                    "text": { "characters": "Create User" }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "filters",
+        "name": "Filters",
+        "type": "frame",
+        "layout": {
+          "mode": "flex",
+          "direction": "row",
+          "gap": 16,
+          "className": "flex flex-row gap-4"
+        },
+        "children": [
+          {
+            "id": "search",
+            "name": "Input/Search",
+            "type": "instance",
+            "mainComponentName": "Input/Search"
+          },
+          {
+            "id": "status",
+            "name": "Select",
+            "type": "instance",
+            "mainComponentName": "Select"
+          }
+        ]
+      },
+      {
+        "id": "table-card",
+        "name": "Card",
+        "type": "instance",
+        "mainComponentName": "Card",
+        "children": [
+          {
+            "id": "table",
+            "name": "Table",
+            "type": "instance",
+            "mainComponentName": "Table"
+          }
+        ]
+      }
+    ]
+  }
+}

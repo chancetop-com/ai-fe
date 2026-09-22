@@ -1,0 +1,271 @@
+{
+  "version": 1,
+  "stack": "antd",
+  "meta": {
+    "name": "Left",
+    "figmaFileKey": "bXm7dRd8TmCl94bBJTWj1B",
+    "figmaNodeId": "campaign-left"
+  },
+  "root": {
+    "id": "root",
+    "name": "Left",
+    "type": "frame",
+    "layout": {
+      "mode": "flex",
+      "direction": "column",
+      "gap": 24,
+      "padding": { "top": 24, "right": 24, "bottom": 24, "left": 24 },
+      "className": "flex flex-col gap-6 p-6"
+    },
+    "children": [
+      {
+        "id": "basics",
+        "name": "Campaign basics",
+        "type": "frame",
+        "layout": { "mode": "flex", "direction": "column", "gap": 16, "className": "flex flex-col gap-4" },
+        "children": [
+          { "id": "basics-title", "name": "text", "type": "text", "text": { "characters": "Campaign basics" } },
+          {
+            "id": "name-field",
+            "type": "frame",
+            "name": "name",
+            "layout": { "mode": "flex", "direction": "column", "gap": 4, "className": "flex flex-col gap-1" },
+            "children": [
+              {
+                "id": "name-row",
+                "type": "frame",
+                "name": "row",
+                "layout": { "mode": "flex", "direction": "row", "gap": 4, "className": "flex flex-row gap-1" },
+                "children": [
+                  { "id": "nl", "type": "text", "name": "t", "text": { "characters": "Campaign name *" } },
+                  { "id": "nc", "type": "text", "name": "t", "text": { "characters": "0/50" } }
+                ]
+              },
+              { "id": "nv", "type": "text", "name": "t", "text": { "characters": "Best offers: 10% off !" } }
+            ]
+          },
+          {
+            "id": "time-field",
+            "type": "frame",
+            "name": "time",
+            "layout": { "mode": "flex", "direction": "column", "gap": 8, "className": "flex flex-col gap-2" },
+            "children": [
+              { "id": "tl", "type": "text", "name": "t", "text": { "characters": "Scheduled send time *" } },
+              { "id": "tp", "type": "instance", "name": "DatePicker", "mainComponentName": "DatePicker" }
+            ]
+          },
+          {
+            "id": "customer-field",
+            "type": "frame",
+            "name": "customer",
+            "layout": { "mode": "flex", "direction": "column", "gap": 4, "className": "flex flex-col gap-1" },
+            "children": [
+              { "id": "cl", "type": "text", "name": "t", "text": { "characters": "Customer *" } },
+              { "id": "cv", "type": "text", "name": "t", "text": { "characters": "Select recipients" } }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "content",
+        "name": "Campaign content",
+        "type": "frame",
+        "layout": { "mode": "flex", "direction": "column", "gap": 16, "className": "flex flex-col gap-4" },
+        "children": [
+          { "id": "ct", "type": "text", "name": "t", "text": { "characters": "Campaign content" } },
+          {
+            "id": "blocks-field",
+            "type": "frame",
+            "name": "Blocks",
+            "layout": { "mode": "flex", "direction": "column", "gap": 4, "className": "flex flex-col gap-1" },
+            "children": [
+              { "id": "bl", "type": "text", "name": "t", "text": { "characters": "Blocks *" } },
+              {
+                "id": "grid",
+                "type": "frame",
+                "name": "grid",
+                "layout": { "mode": "flex", "direction": "column", "gap": 12, "className": "flex flex-col gap-3" },
+                "children": [
+                  {
+                    "id": "r1",
+                    "type": "frame",
+                    "name": "row1",
+                    "layout": { "mode": "flex", "direction": "row", "gap": 12, "className": "flex flex-row gap-3" },
+                    "children": [
+                      { "id": "t1", "type": "text", "name": "t", "text": { "characters": "Text" } },
+                      { "id": "t2", "type": "text", "name": "t", "text": { "characters": "Image" } },
+                      { "id": "t3", "type": "text", "name": "t", "text": { "characters": "Button" } }
+                    ]
+                  },
+                  {
+                    "id": "r2",
+                    "type": "frame",
+                    "name": "row2",
+                    "layout": { "mode": "flex", "direction": "row", "gap": 12, "className": "flex flex-row gap-3" },
+                    "children": [
+                      { "id": "t4", "type": "text", "name": "t", "text": { "characters": "Item" } },
+                      { "id": "t5", "type": "text", "name": "t", "text": { "characters": "Location" } },
+                      { "id": "t6", "type": "text", "name": "t", "text": { "characters": "Promotion" } }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "text-block",
+            "type": "frame",
+            "name": "Text",
+            "layout": { "mode": "flex", "direction": "column", "gap": 0, "className": "flex flex-col" },
+            "children": [
+              { "id": "tt", "type": "text", "name": "t", "text": { "characters": "Text" } },
+              {
+                "id": "tb",
+                "type": "frame",
+                "name": "body",
+                "layout": { "mode": "flex", "direction": "column", "gap": 12, "className": "flex flex-col gap-3" },
+                "children": [
+                  {
+                    "id": "hf",
+                    "type": "frame",
+                    "name": "Headline",
+                    "layout": { "mode": "flex", "direction": "column", "gap": 4, "className": "flex flex-col gap-1" },
+                    "children": [
+                      {
+                        "id": "hr",
+                        "type": "frame",
+                        "name": "row",
+                        "layout": { "mode": "flex", "direction": "row", "gap": 4, "className": "flex flex-row gap-1" },
+                        "children": [
+                          { "id": "hl", "type": "text", "name": "t", "text": { "characters": "Headline *" } },
+                          { "id": "hc", "type": "text", "name": "t", "text": { "characters": "0/400" } }
+                        ]
+                      },
+                      { "id": "hv", "type": "text", "name": "t", "text": { "characters": "Missed you! Come back for your exclusive 10% off" } }
+                    ]
+                  },
+                  {
+                    "id": "df",
+                    "type": "frame",
+                    "name": "Description",
+                    "layout": { "mode": "flex", "direction": "column", "gap": 4, "className": "flex flex-col gap-1" },
+                    "children": [
+                      {
+                        "id": "dr",
+                        "type": "frame",
+                        "name": "row",
+                        "layout": { "mode": "flex", "direction": "row", "gap": 4, "className": "flex flex-row gap-1" },
+                        "children": [
+                          { "id": "dl", "type": "text", "name": "t", "text": { "characters": "Description" } },
+                          { "id": "dc", "type": "text", "name": "t", "text": { "characters": "0/2000" } }
+                        ]
+                      },
+                      { "id": "dv", "type": "text", "name": "t", "text": { "characters": "We've been busy in the kitchen. Here's what's new — crafted with the same care you've come to expect from us." } }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "image-block",
+            "type": "frame",
+            "name": "Image",
+            "layout": { "mode": "flex", "direction": "column", "gap": 0, "className": "flex flex-col" },
+            "children": [
+              { "id": "it", "type": "text", "name": "t", "text": { "characters": "Image" } },
+              {
+                "id": "ib",
+                "type": "frame",
+                "name": "body",
+                "layout": { "mode": "flex", "direction": "column", "gap": 12, "className": "flex flex-col gap-3" },
+                "children": [
+                  {
+                    "id": "lf",
+                    "type": "frame",
+                    "name": "Layout",
+                    "layout": { "mode": "flex", "direction": "column", "gap": 4, "className": "flex flex-col gap-1" },
+                    "children": [
+                      {
+                        "id": "lr",
+                        "type": "frame",
+                        "name": "row",
+                        "layout": { "mode": "flex", "direction": "row", "gap": 4, "className": "flex flex-row gap-1" },
+                        "children": [
+                          { "id": "ll", "type": "text", "name": "t", "text": { "characters": "Layout *" } },
+                          { "id": "lc", "type": "text", "name": "t", "text": { "characters": "0/400" } }
+                        ]
+                      },
+                      { "id": "lv", "type": "text", "name": "t", "text": { "characters": "Image with no text" } }
+                    ]
+                  },
+                  {
+                    "id": "imgf",
+                    "type": "frame",
+                    "name": "Image field",
+                    "layout": { "mode": "flex", "direction": "column", "gap": 4, "className": "flex flex-col gap-1" },
+                    "children": [
+                      { "id": "il", "type": "text", "name": "t", "text": { "characters": "Image *" } },
+                      { "id": "iv", "type": "text", "name": "t", "text": { "characters": "Main" } }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "loc-block",
+            "type": "frame",
+            "name": "Location block",
+            "layout": { "mode": "flex", "direction": "column", "gap": 0, "className": "flex flex-col" },
+            "children": [
+              { "id": "loct", "type": "text", "name": "t", "text": { "characters": "Location" } },
+              {
+                "id": "locb",
+                "type": "frame",
+                "name": "body",
+                "layout": { "mode": "flex", "direction": "row", "gap": 8, "className": "flex flex-row gap-2" },
+                "children": [
+                  { "id": "p1", "type": "text", "name": "t", "text": { "characters": "Downtown Manhattan" } },
+                  { "id": "p2", "type": "text", "name": "t", "text": { "characters": "US Load" } },
+                  { "id": "p3", "type": "text", "name": "t", "text": { "characters": "Stone’s pizza" } },
+                  { "id": "p4", "type": "text", "name": "t", "text": { "characters": "Stone’s pizza" } },
+                  { "id": "p5", "type": "text", "name": "t", "text": { "characters": "New location" } },
+                  { "id": "p6", "type": "text", "name": "t", "text": { "characters": "+12" } }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "promo-block",
+            "type": "frame",
+            "name": "Promotion",
+            "layout": { "mode": "flex", "direction": "column", "gap": 0, "className": "flex flex-col" },
+            "children": [
+              { "id": "pt", "type": "text", "name": "t", "text": { "characters": "Promotion" } },
+              {
+                "id": "pb",
+                "type": "frame",
+                "name": "body",
+                "layout": { "mode": "flex", "direction": "column", "gap": 8, "className": "flex flex-col gap-2" },
+                "children": [
+                  { "id": "ps", "type": "text", "name": "t", "text": { "characters": "5 promotions selected" } },
+                  {
+                    "id": "pc",
+                    "type": "frame",
+                    "name": "card",
+                    "layout": { "mode": "flex", "direction": "column", "gap": 4, "className": "flex flex-col gap-1" },
+                    "children": [
+                      { "id": "pct", "type": "text", "name": "t", "text": { "characters": "Auto Discount" } },
+                      { "id": "pcn", "type": "text", "name": "t", "text": { "characters": "{Promotion name}" } }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

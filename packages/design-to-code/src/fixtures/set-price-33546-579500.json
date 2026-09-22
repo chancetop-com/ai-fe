@@ -1,0 +1,248 @@
+{
+  "version": 1,
+  "stack": "antd",
+  "meta": {
+    "name": "Set Price",
+    "figmaFileKey": "bXm7dRd8TmCl94bBJTWj1B",
+    "figmaNodeId": "33546:579500"
+  },
+  "root": {
+    "id": "root",
+    "name": "Set Price",
+    "type": "frame",
+    "layout": {
+      "mode": "flex",
+      "direction": "column",
+      "gap": 16,
+      "padding": { "top": 24, "right": 24, "bottom": 24, "left": 24 },
+      "className": "flex flex-col gap-4 p-6 items-end justify-start"
+    },
+    "children": [
+      {
+        "id": "intro-wrap",
+        "name": "intro wrap",
+        "type": "frame",
+        "layout": {
+          "mode": "flex",
+          "direction": "row",
+          "gap": 8,
+          "className": "flex flex-row gap-2 p-4 items-center justify-start"
+        },
+        "children": [
+          {
+            "id": "intro",
+            "name": "intro",
+            "type": "text",
+            "text": {
+              "characters": "Items and modifiers without location price or channel price overrides will sell at the default price. Channel price take the highest priority."
+            }
+          }
+        ]
+      },
+      {
+        "id": "form",
+        "name": "form",
+        "type": "frame",
+        "layout": {
+          "mode": "flex",
+          "direction": "column",
+          "gap": 16,
+          "className": "flex flex-col gap-4 p-0 items-start justify-start"
+        },
+        "children": [
+          {
+            "id": "type",
+            "name": "Type",
+            "type": "frame",
+            "layout": { "mode": "flex", "direction": "column", "gap": 8, "className": "flex flex-col gap-2" },
+            "children": [
+              { "id": "type-l", "name": "label", "type": "text", "text": { "characters": "Type *" } },
+              {
+                "id": "type-opts",
+                "name": "opts",
+                "type": "frame",
+                "layout": { "mode": "flex", "direction": "row", "gap": 8, "className": "flex flex-row gap-2" },
+                "children": [
+                  {
+                    "id": "t1",
+                    "name": "Tag",
+                    "type": "instance",
+                    "mainComponentName": "Tag",
+                    "children": [{ "id": "t1t", "name": "t", "type": "text", "text": { "characters": "Location price" } }]
+                  },
+                  {
+                    "id": "t2",
+                    "name": "Tag",
+                    "type": "instance",
+                    "mainComponentName": "Tag",
+                    "children": [{ "id": "t2t", "name": "t", "type": "text", "text": { "characters": "Channel price" } }]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "channels",
+            "name": "Channels",
+            "type": "frame",
+            "layout": { "mode": "flex", "direction": "column", "gap": 4, "className": "flex flex-col gap-1" },
+            "children": [
+              { "id": "ch-l", "name": "label", "type": "text", "text": { "characters": "Channels *" } },
+              {
+                "id": "ch-opts",
+                "name": "opts",
+                "type": "frame",
+                "layout": { "mode": "flex", "direction": "row", "gap": 8, "className": "flex flex-row gap-2" },
+                "children": [
+                  {
+                    "id": "c1w",
+                    "name": "wrap",
+                    "type": "frame",
+                    "children": [
+                      {
+                        "id": "c1",
+                        "name": "Tag",
+                        "type": "instance",
+                        "mainComponentName": "Tag",
+                        "children": [{ "id": "c1t", "name": "t", "type": "text", "text": { "characters": "Online Ordering" } }]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c2w",
+                    "name": "wrap",
+                    "type": "frame",
+                    "children": [
+                      {
+                        "id": "c2",
+                        "name": "Tag",
+                        "type": "instance",
+                        "mainComponentName": "Tag",
+                        "children": [{ "id": "c2t", "name": "t", "type": "text", "text": { "characters": "In-store Ordering" } }]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c3w",
+                    "name": "wrap",
+                    "type": "frame",
+                    "children": [
+                      {
+                        "id": "c3",
+                        "name": "Tag",
+                        "type": "instance",
+                        "mainComponentName": "Tag",
+                        "children": [{ "id": "c3t", "name": "t", "type": "text", "text": { "characters": "Third-Party Marketplaces" } }]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "locations",
+            "name": "Locations",
+            "type": "frame",
+            "layout": { "mode": "flex", "direction": "column", "gap": 4, "className": "flex flex-col gap-1" },
+            "children": [
+              { "id": "loc-l", "name": "label", "type": "text", "text": { "characters": "Locations *" } },
+              {
+                "id": "loc-opts",
+                "name": "opts",
+                "type": "frame",
+                "layout": { "mode": "flex", "direction": "row", "gap": 8, "className": "flex flex-row gap-2" },
+                "children": [
+                  { "id": "l1", "name": "t", "type": "text", "text": { "characters": "Remarkable Foods" } },
+                  { "id": "l2", "name": "t", "type": "text", "text": { "characters": "Stone’s pizza" } },
+                  { "id": "l3", "name": "t", "type": "text", "text": { "characters": "US Load" } }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "alert-outer",
+            "name": "warning outer",
+            "type": "frame",
+            "layout": { "mode": "flex", "direction": "column", "gap": 16, "className": "flex flex-col gap-4 p-4 items-start justify-center" },
+            "children": [
+              {
+                "id": "alert",
+                "name": "warning",
+                "type": "frame",
+                "layout": { "mode": "flex", "direction": "column", "gap": 16, "className": "flex flex-col gap-4 p-4" },
+                "children": [
+                  { "id": "a1", "name": "t", "type": "text", "text": { "characters": "2 locations already configured, channel price will be overwritten" } }
+                ]
+              },
+              {
+                "id": "a2",
+                "name": "details",
+                "type": "frame",
+                "layout": { "mode": "flex", "direction": "column", "gap": 12, "className": "flex flex-col gap-3 items-start justify-start" },
+                "children": [
+                  {
+                    "id": "a2a",
+                    "name": "row",
+                    "type": "frame",
+                    "layout": { "mode": "flex", "direction": "column", "gap": 4, "className": "flex flex-col gap-1 p-0 items-start justify-start" },
+                    "children": [
+                      { "id": "a2a1", "name": "t", "type": "text", "text": { "characters": "Stone’s pizza" } },
+                      { "id": "a2a2", "name": "t", "type": "text", "text": { "characters": "Online Ordering: $12.99, In-store Ordering: $12.99" } }
+                    ]
+                  },
+                  {
+                    "id": "a2b",
+                    "name": "row",
+                    "type": "frame",
+                    "layout": { "mode": "flex", "direction": "column", "gap": 4, "className": "flex flex-col gap-1 p-0 items-start justify-start" },
+                    "children": [
+                      { "id": "a2b1", "name": "t", "type": "text", "text": { "characters": "US Load" } },
+                      { "id": "a2b2", "name": "t", "type": "text", "text": { "characters": "Online Ordering: $12.99" } }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "price-row",
+            "name": "price row",
+            "type": "frame",
+            "layout": { "mode": "flex", "direction": "row", "gap": 16, "className": "flex flex-row gap-4 p-0 items-start justify-start" },
+            "children": [
+              {
+                "id": "price-wrap",
+                "name": "price wrap",
+                "type": "frame",
+                "layout": { "mode": "flex", "direction": "column", "gap": 4, "className": "flex flex-col gap-1" },
+                "children": [
+                  {
+                    "id": "price",
+                    "name": "price",
+                    "type": "frame",
+                    "layout": { "mode": "flex", "direction": "column", "gap": 4, "className": "flex flex-col gap-1" },
+                    "children": [
+                      { "id": "p-l", "name": "label", "type": "text", "text": { "characters": "Price *" } },
+                      {
+                        "id": "p-in",
+                        "name": "input",
+                        "type": "frame",
+                        "layout": { "mode": "flex", "direction": "row", "gap": 8, "className": "flex flex-row gap-2 px-4" },
+                        "children": [
+                          { "id": "dollar", "name": "t", "type": "text", "text": { "characters": "$" } },
+                          { "id": "amt", "name": "t", "type": "text", "text": { "characters": "12.99" } }
+                        ]
+                      }
+                    ]
+                  },
+                  { "id": "p-h", "name": "hint", "type": "text", "text": { "characters": "Enter 0 to make the price free." } }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

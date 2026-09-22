@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+  <!-- Auto Layout horizontal: stacked horizontal bars (row flow) -->
+  <rect x="2.5" y="4" width="11" height="2.5" rx="0.5" fill="currentColor"/>
+  <rect x="2.5" y="9.5" width="11" height="2.5" rx="0.5" fill="currentColor"/>
+</svg>

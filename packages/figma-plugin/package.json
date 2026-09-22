@@ -1,0 +1,23 @@
+{
+  "name": "@connexup/figma-plugin",
+  "version": "0.1.0",
+  "description": "Figma plugin: Connexup design to antd + React/HTML",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@connexup/design-to-code": "workspace:*"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.109.0",
+    "@connexup/typescript-config": "workspace:*",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+  <!-- Component set / variants: stacked diamonds -->
+  <path d="M8 0.8L12.5 5.3 8 9.8 3.5 5.3 8 0.8Z" fill="currentColor" opacity="0.35"/>
+  <path d="M8 5.2L13.2 10.4 8 15.2 2.8 10.4 8 5.2Z" fill="currentColor"/>
+</svg>

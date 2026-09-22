@@ -1,0 +1,907 @@
+{
+  "version": 1,
+  "stack": "antd",
+  "meta": {
+    "name": "Frame 1597880977",
+    "figmaFileKey": "bXm7dRd8TmCl94bBJTWj1B",
+    "figmaNodeId": "I33546:575846;21744:205686;33546:575912"
+  },
+  "root": {
+    "id": "root",
+    "name": "Frame 1597880977",
+    "type": "frame",
+    "layout": {
+      "mode": "flex",
+      "direction": "column",
+      "gap": 16,
+      "alignItems": "CENTER",
+      "padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 16,
+        "left": 0
+      },
+      "className": "flex flex-col gap-4 items-center"
+    },
+    "children": [
+      {
+        "id": "header",
+        "name": "Header",
+        "type": "frame",
+        "layout": {
+          "mode": "flex",
+          "direction": "row",
+          "gap": 16,
+          "alignItems": "CENTER",
+          "justifyContent": "SPACE_BETWEEN",
+          "padding": {
+            "top": 12,
+            "right": 16,
+            "bottom": 12,
+            "left": 16
+          },
+          "className": "flex flex-row gap-4 items-center justify-between"
+        },
+        "children": [
+          {
+            "id": "title-block",
+            "name": "Title",
+            "type": "frame",
+            "layout": {
+              "mode": "flex",
+              "direction": "column",
+              "gap": 4,
+              "className": "flex flex-col gap-1"
+            },
+            "children": [
+              {
+                "id": "t1-inst",
+                "name": "Pricing by location",
+                "type": "instance",
+                "mainComponentName": "Table",
+                "children": [
+                  {
+                    "id": "t1",
+                    "name": "text",
+                    "type": "text",
+                    "text": {
+                      "characters": "Pricing by location"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "t2-inst",
+                "name": "Custom pricing for specific locations.",
+                "type": "instance",
+                "mainComponentName": "Table",
+                "children": [
+                  {
+                    "id": "t2",
+                    "name": "text",
+                    "type": "text",
+                    "text": {
+                      "characters": "Custom pricing for specific locations."
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "meta",
+            "name": "Meta",
+            "type": "frame",
+            "layout": {
+              "mode": "flex",
+              "direction": "row",
+              "gap": 0,
+              "alignItems": "CENTER",
+              "justifyContent": "MAX",
+              "className": "flex flex-row items-center justify-end"
+            },
+            "children": [
+              {
+                "id": "m1-inst",
+                "name": "12 locations set",
+                "type": "instance",
+                "mainComponentName": "Table",
+                "children": [
+                  {
+                    "id": "m1",
+                    "name": "text",
+                    "type": "text",
+                    "text": {
+                      "characters": "12 locations set"
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "m2-inst",
+                "name": "$12.99",
+                "type": "instance",
+                "mainComponentName": "Table",
+                "children": [
+                  {
+                    "id": "m2",
+                    "name": "text",
+                    "type": "text",
+                    "text": {
+                      "characters": "$12.99"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "body",
+        "name": "Body",
+        "type": "frame",
+        "layout": {
+          "mode": "flex",
+          "direction": "column",
+          "gap": 12,
+          "padding": {
+            "top": 0,
+            "right": 16,
+            "bottom": 0,
+            "left": 16
+          },
+          "className": "flex flex-col gap-3"
+        },
+        "children": [
+          {
+            "id": "actions",
+            "name": "Actions",
+            "type": "frame",
+            "layout": {
+              "mode": "flex",
+              "direction": "row",
+              "gap": 10,
+              "justifyContent": "MAX",
+              "className": "flex flex-row gap-2.5 justify-end"
+            },
+            "children": [
+              {
+                "id": "btn",
+                "name": "Button",
+                "type": "instance",
+                "mainComponentName": "Button",
+                "children": [
+                  {
+                    "id": "btn-txt-inst",
+                    "name": "Set price",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "btn-txt",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "Set price"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "table-cols",
+            "name": "TableColumns",
+            "type": "frame",
+            "layout": {
+              "mode": "flex",
+              "direction": "row",
+              "gap": 0,
+              "className": "flex flex-row gap-0"
+            },
+            "children": [
+              {
+                "id": "c0",
+                "name": "Col0",
+                "type": "frame",
+                "layout": {
+                  "mode": "flex",
+                  "direction": "column",
+                  "gap": 0,
+                  "className": "flex flex-col"
+                },
+                "children": [
+                  {
+                    "id": "c0h-inst",
+                    "name": "Online ordering price",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c0h",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "Online ordering price"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c0r0-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c0r0",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c0r1-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c0r1",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c0r2-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c0r2",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c0r3-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c0r3",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c0r4-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c0r4",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c0r5-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c0r5",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "c1",
+                "name": "Col1",
+                "type": "frame",
+                "layout": {
+                  "mode": "flex",
+                  "direction": "column",
+                  "gap": 0,
+                  "className": "flex flex-col"
+                },
+                "children": [
+                  {
+                    "id": "c1h-inst",
+                    "name": "Online ordering price",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c1h",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "Online ordering price"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c1r0-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c1r0",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c1r1-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c1r1",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c1r2-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c1r2",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c1r3-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c1r3",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c1r4-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c1r4",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c1r5-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c1r5",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "c2",
+                "name": "Col2",
+                "type": "frame",
+                "layout": {
+                  "mode": "flex",
+                  "direction": "column",
+                  "gap": 0,
+                  "className": "flex flex-col"
+                },
+                "children": [
+                  {
+                    "id": "c2h-inst",
+                    "name": "In-store ordering price",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c2h",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "In-store ordering price"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c2r0-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c2r0",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c2r1-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c2r1",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c2r2-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c2r2",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c2r3-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c2r3",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c2r4-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c2r4",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c2r5-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c2r5",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "c3",
+                "name": "Col3",
+                "type": "frame",
+                "layout": {
+                  "mode": "flex",
+                  "direction": "column",
+                  "gap": 0,
+                  "className": "flex flex-col"
+                },
+                "children": [
+                  {
+                    "id": "c3h-inst",
+                    "name": "3rd-party marketplaces price",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c3h",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "3rd-party marketplaces price"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c3r0-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c3r0",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c3r1-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c3r1",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c3r2-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c3r2",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c3r3-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c3r3",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c3r4-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c3r4",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c3r5-inst",
+                    "name": "$ 12.99",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c3r5",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "$ 12.99"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "c4",
+                "name": "Col4",
+                "type": "frame",
+                "layout": {
+                  "mode": "flex",
+                  "direction": "column",
+                  "gap": 0,
+                  "className": "flex flex-col"
+                },
+                "children": [
+                  {
+                    "id": "c4h-inst",
+                    "name": "Location name",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c4h",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "Location name"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c4r0-inst",
+                    "name": "Location name",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c4r0",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "Location name"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c4r1-inst",
+                    "name": "Location name",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c4r1",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "Location name"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c4r2-inst",
+                    "name": "Location name",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c4r2",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "Location name"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c4r3-inst",
+                    "name": "Location name",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c4r3",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "Location name"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c4r4-inst",
+                    "name": "Location name",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c4r4",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "Location name"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c4r5-inst",
+                    "name": "Location name",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c4r5",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "Location name"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c4r6-inst",
+                    "name": "Display name",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c4r6",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "Display name"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c4r7-inst",
+                    "name": "Display name",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c4r7",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "Display name"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c4r8-inst",
+                    "name": "Display name",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c4r8",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "Display name"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "id": "c4r9-inst",
+                    "name": "Display name",
+                    "type": "instance",
+                    "mainComponentName": "Table",
+                    "children": [
+                      {
+                        "id": "c4r9",
+                        "name": "text",
+                        "type": "text",
+                        "text": {
+                          "characters": "Display name"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "table-chrome",
+                "name": "Table",
+                "type": "instance",
+                "mainComponentName": "Table"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
